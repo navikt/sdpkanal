@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee.xsd
+	http://camel.apache.org/schema/spring
+	http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	
+	<!-- Enable use of properties in context -->
+	<context:property-placeholder location="classpath:src/main/resources/sdpkanal.properties"/>
+	
+	<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveLoggerMock">
+		<property name="logCaller" value="JBOSS: SDP-kanal"/>
+		<property name="logAction" value="urn:skatteetaten:fastsetting:innsamling:meldingsproduksjon:a-nav-inntekt-spoerring:soap:v1:hentInntektsmottakersInntekt"/>
+		<property name="logServiceConsumer" value="urn:sdp:avsender"/>
+		<property name="logServiceProducer" value="urn:sdp:meldingsformidler"/>
+		<property name="logEndpoint" value="http://e26apvl028.test.local:9089/nav-emottak-archiver-web/services/archiver"/>
+		<property name="logUsername" value="srvsdpgw_u"/>
+		<property name="logPassword" value="dfwYokIJ83-suyq"/>
+		<property name="maxRetries" value="4"/>
+		<property name="retryIntervalInSeconds" value="1"/>
+	</bean>
+	
+	<bean id="signatureValidator" class="no.nav.kanal.crypto.SignatureValidator" init-method="setupTruststore">
+		<property name="trustStoreFile" value="src/test/resources/crypto/u-truststore.jks"/>
+		<property name="trustStorePassword" value="changeit"/>
+		<property name="certificateRevocationChecking" value="false"/>
+	</bean>
+	
+	<bean id="kvitteringValidator" class="no.nav.kanal.camel.KvitteringValidator">
+		<property name="legalArchive" ref="legalArchiveKvittering"/>
+		<property name="signatureValidator" ref="signatureValidator"/>
+	</bean>
+	
+
+	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false">
+		<jmxAgent id="jmxAgent" mbeanObjectDomainName="no.nav.kanal" usePlatformMBeanServer="true" />
+		
+		<dataFormats>
+			<jaxb id="sdpkanal" prettyPrint="true" contextPath="no.difi.begrep.sdp.schema_v10:no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.meldinger:no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1:org.unece.cefact.namespaces.standardbusinessdocumentheader:org.w3._2000._09.xmldsig_"/>
+		</dataFormats>
+		
+		<route id="testDigitalPostEnricher">
+			 <from uri="direct:start"/>
+			 <bean ref="kvitteringValidator"/>
+			 <to uri="mock:result"/>
+		</route>
+	</camelContext>
+
+</beans>

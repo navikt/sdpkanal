@@ -2,23 +2,26 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>no.nav.sdp-kanal</groupId>
-	<artifactId>sdp-kanal</artifactId>
-	<version>1.2.31.DEBUG16</version>
-	<packaging>pom</packaging>
-	
+	<artifactId>sdpkanal</artifactId>
+	<version>1.3.0-SNAPSHOT</version>
+	<packaging>jar</packaging>
+
+
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>1.5.17.RELEASE</version>
+	</parent>
+
 	<properties>
-		<java.version>1.7</java.version>
-		<jee.version>6</jee.version>
-		
+		<java.version>1.8</java.version>
+
 		<!-- Dependency versions -->
-		<!-- Keep spring.version to same version as pulled in by camel-spring -->
-		<spring.version>4.2.5.RELEASE</spring.version>
-		<camel.version>2.17.3</camel.version>
+		<camel.version>2.22.2</camel.version>
 		<logback.version>1.1.3</logback.version>
 		<sdpkanal.tjenestebeskrivelse.version>1.1.0</sdpkanal.tjenestebeskrivelse.version>
 		<nav-juridisk-arkiv-klient.version>1.2</nav-juridisk-arkiv-klient.version>
-		<javax.jms.version>1.1</javax.jms.version>
-		<javax.servlet.version>3.0.1</javax.servlet.version>		
+		<javax.servlet.version>3.0.1</javax.servlet.version>
 		<flameas4.version>5.3.3-4</flameas4.version>
 		<iaik.version>5.2</iaik.version>
 		<iaik.cms.version>5.0</iaik.cms.version>
@@ -26,13 +29,12 @@
 		<iaik.xsect.version>1.191</iaik.xsect.version>
 		<iaik.hlapi.version>1.1</iaik.hlapi.version>
 		<jolokia.version>1.3.4</jolokia.version>
-		<jackson.version>1.9.13</jackson.version>
 
 		<!-- Test dependencies versions -->
 		<junit.version>4.11</junit.version>
 		<hamcrest.version>1.3</hamcrest.version>
 		<wiremock.version>1.58</wiremock.version>
-		
+
 		<!-- Plugin versions -->
 		<maven-compiler-plugin.version>3.1</maven-compiler-plugin.version>
 		<maven-ear-plugin.version>2.9</maven-ear-plugin.version>
@@ -48,17 +50,16 @@
 		<maven-surefire-report-plugin.version>2.17</maven-surefire-report-plugin.version>
 		<maven-javadoc-plugin.version>2.10</maven-javadoc-plugin.version>
 		<maven-pmd-plugin.version>2.7.1</maven-pmd-plugin.version>
-		
+
 	</properties>
-	
-	<modules>
-		<module>nav-sdp-kanal-web</module>
-		<module>nav-sdp-kanal-jee</module>
-		<module>nav-sdp-kanal-appconfig</module>
-	</modules>
-	
-	
-	
+
+	<repositories>
+		<repository>
+			<id>Internal Maven Repository</id>
+			<url>https://repo.adeo.no/repository/maven-releases/</url>
+		</repository>
+	</repositories>
+
 	<distributionManagement>
 		<repository>
 			<id>m2internal</id>
@@ -73,151 +74,150 @@
 		</snapshotRepository>
 	</distributionManagement>
 
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.apache.camel</groupId>
-				<artifactId>camel-core</artifactId>
-				<version>${camel.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.camel</groupId>
-				<artifactId>camel-spring</artifactId>
-				<version>${camel.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.camel</groupId>
-				<artifactId>camel-jaxb</artifactId>
-				<version>${camel.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.camel</groupId>
-				<artifactId>camel-jms</artifactId>
-				<version>${camel.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.camel</groupId>
-				<artifactId>camel-metrics</artifactId>
-				<version>${camel.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.jolokia</groupId>
-				<artifactId>jolokia-core</artifactId>
-				<version>${jolokia.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework</groupId>
-				<artifactId>spring-web</artifactId>
-				<version>${spring.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>ch.qos.logback</groupId>
-				<artifactId>logback-classic</artifactId>
-				<version>${logback.version}</version>
-			</dependency>
-			<dependency>
-  				<groupId>org.codehaus.jackson</groupId>
-  				<artifactId>jackson-mapper-asl</artifactId>
-  				<version>${jackson.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>no.nav.tjenester</groupId>
-				<artifactId>nav-sdpkanal-tjenestespesifikasjon</artifactId>
-				<version>${sdpkanal.tjenestebeskrivelse.version}</version>
-				<classifier>jaxws</classifier>
-			</dependency>
-			<dependency>
-				<groupId>no.nav</groupId>
-				<artifactId>nav-juridisk-arkiv-klient</artifactId>
-				<version>${nav-juridisk-arkiv-klient.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>javax.jms</groupId>
-				<artifactId>jms</artifactId>
-				<version>${javax.jms.version}</version>
-				<scope>provided</scope>
-			</dependency>
-			<dependency>
-  				<groupId>javax.servlet</groupId>
-  				<artifactId>javax.servlet-api</artifactId>
-  				<version>${javax.servlet.version}</version>
-  				<scope>provided</scope>
-			</dependency>
-			<dependency>
-				<groupId>iaik</groupId>
-				<artifactId>iaik_cms</artifactId>
-				<version>${iaik.cms.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>iaik</groupId>
-				<artifactId>iaik_jce_signed</artifactId>
-				<version>${iaik.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>iaik</groupId>
-				<artifactId>iaik_jce_native_aes</artifactId>
-				<version>${iaik.version}</version>
-			</dependency>
-			
-			<dependency>
-				<groupId>iaik</groupId>
-				<artifactId>iaik_xades</artifactId>
-				<version>${iaik.xades.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>iaik</groupId>
-				<artifactId>iaik_xsect</artifactId>
-				<version>${iaik.xsect.version}</version>
-			</dependency>
-			<dependency>
-  				<groupId>iaik</groupId>
-  				<artifactId>iaik_hlapi</artifactId>
-  				<version>${iaik.hlapi.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>flame</groupId>
-				<artifactId>fmsclientapi.as4</artifactId>
-				<version>${flameas4.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.tomakehurst</groupId>
-				<artifactId>wiremock</artifactId>
-				<scope>test</scope>
-				<version>${wiremock.version}</version>
-				<exclusions>
-					<exclusion>
-						<groupId>com.fasterxml.jackson.core</groupId>
-						<artifactId>jackson-core</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>com.fasterxml.jackson.core</groupId>
-						<artifactId>jackson-databind</artifactId>
-					</exclusion>
-					<exclusion>
-						<groupId>com.fasterxml.jackson.core</groupId>
-						<artifactId>jackson-annotations</artifactId>
-					</exclusion>
-				</exclusions>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
-	
+
 	<dependencies>
 		<dependency>
-			<groupId>iaik</groupId>
-			<artifactId>iaik_jce_signed</artifactId>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.codehaus.btm</groupId>
+			<artifactId>btm</artifactId>
+			<version>2.1.4</version>
+		</dependency>
+		<!-- Servlet API -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.1.0</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet.jsp</groupId>
+			<artifactId>javax.servlet.jsp-api</artifactId>
+			<version>2.3.2-b02</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>jstl</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-core</artifactId>
+			<version>${camel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-spring</artifactId>
+			<version>${camel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-jaxb</artifactId>
+			<version>${camel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-jms</artifactId>
+			<version>${camel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.camel</groupId>
+			<artifactId>camel-metrics</artifactId>
+			<version>${camel.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jolokia</groupId>
+			<artifactId>jolokia-core</artifactId>
+			<version>${jolokia.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>${logback.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.ibm.mq</groupId>
+			<artifactId>com.ibm.mq.allclient</artifactId>
+			<version>9.1.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>no.nav.tjenester</groupId>
+			<artifactId>nav-sdpkanal-tjenestespesifikasjon</artifactId>
+			<version>${sdpkanal.tjenestebeskrivelse.version}</version>
+			<classifier>jaxws</classifier>
+		</dependency>
+		<dependency>
+			<groupId>no.nav</groupId>
+			<artifactId>nav-juridisk-arkiv-klient</artifactId>
+			<version>${nav-juridisk-arkiv-klient.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>iaik</groupId>
+			<artifactId>iaik_cms</artifactId>
+			<version>${iaik.cms.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>iaik</groupId>
+			<artifactId>iaik_jce_signed</artifactId>
+			<version>${iaik.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>iaik</groupId>
+			<artifactId>iaik_jce_native_aes</artifactId>
+			<version>${iaik.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>iaik</groupId>
 			<artifactId>iaik_xades</artifactId>
+			<version>${iaik.xades.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>iaik</groupId>
 			<artifactId>iaik_xsect</artifactId>
+			<version>${iaik.xsect.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>iaik</groupId>
+			<artifactId>iaik_hlapi</artifactId>
+			<version>${iaik.hlapi.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>flame</groupId>
 			<artifactId>fmsclientapi.as4</artifactId>
+			<version>${flameas4.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.tomakehurst</groupId>
+			<artifactId>wiremock</artifactId>
+			<scope>test</scope>
+			<version>${wiremock.version}</version>
+			<exclusions>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-core</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-databind</artifactId>
+				</exclusion>
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-annotations</artifactId>
+				</exclusion>
+			</exclusions>
 		</dependency>
 
 		<!-- TEST DEPS -->
@@ -248,52 +248,52 @@
 					<artifactId>jaxb-impl</artifactId>
 				</exclusion>
 			</exclusions>
-		</dependency>		
+		</dependency>
 	</dependencies>
-	
+
 	<scm>
-        <connection>scm:git:ssh://git@stash.devillo.no:7999/int/sdpkanal.git</connection>
+		<connection>scm:git:ssh://git@stash.devillo.no:7999/int/sdpkanal.git</connection>
 		<developerConnection>scm:git:ssh://git@stash.devillo.no:7999/int/sdpkanal.git</developerConnection>
 		<url>http://stash.devillo.no/projects/INT/repos/sdpkanal/</url>
-      <tag>HEAD</tag>
-  </scm>
-	
+		<tag>HEAD</tag>
+	</scm>
+
 	<build>
 		<plugins>
 			<plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>${maven-release-plugin.version}</version>
-            </plugin>
-            <plugin>
-            	<groupId>org.jacoco</groupId>
-            	<artifactId>jacoco-maven-plugin</artifactId>
-            	<version>${jacoco.version}</version>
-            	<executions>
-            		<execution>
-            			<id>prepare-unit-test-agent</id>
-            			<goals>
-            				<goal>prepare-agent</goal>
-            			</goals>
-            		</execution>
-            		<execution>
-            			<id>generate-unit-test-report</id>
-            			<goals>
-            				<goal>report</goal>
-            			</goals>
-            		</execution>
-            	</executions>
-          	</plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>${maven-release-plugin.version}</version>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<executions>
+					<execution>
+						<id>prepare-unit-test-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>generate-unit-test-report</id>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 		<extensions>
-            <extension>
-                <groupId>org.apache.maven.wagon</groupId>
-                <artifactId>wagon-webdav-jackrabbit</artifactId>
-                <version>${jackrabbit.version}</version>
-            </extension>
-        </extensions>
+			<extension>
+				<groupId>org.apache.maven.wagon</groupId>
+				<artifactId>wagon-webdav-jackrabbit</artifactId>
+				<version>${jackrabbit.version}</version>
+			</extension>
+		</extensions>
 	</build>
-	
+
 	<reporting>
 		<plugins>
 			<plugin>
@@ -355,7 +355,7 @@
 			</plugin>
 		</plugins>
 	</reporting>
-	
+
 	<profiles>
 		<profile>
 			<!-- Profile for integration test. Avoids JAXB Classpath problems since Camel adds jaxb-impl and jaxb-core which -->
@@ -424,7 +424,7 @@
 								<groupId>com.sun.xml.bind</groupId>
 								<artifactId>jaxb-impl</artifactId>
 							</exclusion>
-						</exclusions>			
+						</exclusions>
 					</dependency>
 					<dependency>
 						<groupId>org.apache.camel</groupId>
@@ -441,9 +441,9 @@
 							</exclusion>
 						</exclusions>
 					</dependency>
-				</dependencies>			
+				</dependencies>
 			</dependencyManagement>
 		</profile>
 	</profiles>
-	
+
 </project>

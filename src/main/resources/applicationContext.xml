@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/util
+	http://www.springframework.org/schema/util/spring-util.xsd	
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee.xsd
+	http://camel.apache.org/schema/spring
+	http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<!-- Enable use of properties in context -->
+	<context:property-placeholder location="classpath:sdpkanal.properties"/>
+	
+	<!-- Enabler routemetrics som kan vises i hawtio -->
+	<!-- Spesifiserer metricsRegistry for å få metrics som logges fra context til å dele registry med det som kommer fra MetricsRoutePolicyFactory -->
+	<bean id="metricsRoutePolicyFactory" class="org.apache.camel.component.metrics.routepolicy.MetricsRoutePolicyFactory">
+		<property name="metricsRegistry" ref="metricsRegistry"/>
+	</bean>
+	<bean id="metricsRegistry" class="com.codahale.metrics.MetricRegistry"/>
+	
+	<!-- Custom metrics for SLAM -->
+	<bean id="sdpkanalMetrics" class="no.nav.kanal.metrics.Metrics"/>
+	
+	<!-- LEGAL ARCHIVE for outgoing messages -->
+	<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveLoggerMock" />
+	<!--<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveLoggerImpl">
+		<property name="logCaller" value="${no.nav.kanal.log.logCaller}"/>
+		<property name="logAction" value="${no.nav.kanal.log.melding.logAction}"/>
+		<property name="logServiceConsumer" value="${no.nav.kanal.log.melding.logServiceConsumer}"/>
+		<property name="logServiceProducer" value="${no.nav.kanal.log.melding.logServiceProducer}"/>
+		<property name="logEndpoint" value="${no.nav.sdp-kanal.legal.archive.service.endpoint.url}"/>
+		<property name="logUsername" value="${no.nav.sdp-kanal.legal.archive.user.username}"/>
+		<property name="logPassword" value="${no.nav.sdp-kanal.legal.archive.user.password}"/>
+		<property name="maxRetries" value="${no.nav.sdp-kanal.legal.archive.maxRetries}"/>
+		<property name="retryIntervalInSeconds" value="${no.nav.sdp-kanal.legal.archive.retryIntervalInSeconds}"/>
+	</bean>-->
+	
+	<!-- LEGAL ARCHIVE for kvitteringer -->
+	<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveLoggerMock" />
+	<!--<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveLoggerImpl">
+		<property name="logCaller" value="${no.nav.kanal.log.logCaller}"/>
+		<property name="logAction" value="${no.nav.kanal.log.kvittering.logAction}"/>
+		<property name="logServiceConsumer" value="${no.nav.kanal.log.kvittering.logServiceConsumer}"/>
+		<property name="logServiceProducer" value="${no.nav.kanal.log.kvittering.logServiceProducer}"/>
+		<property name="logEndpoint" value="${no.nav.sdp-kanal.legal.archive.service.endpoint.url}"/>
+		<property name="logUsername" value="${no.nav.sdp-kanal.legal.archive.user.username}"/>
+		<property name="logPassword" value="${no.nav.sdp-kanal.legal.archive.user.password}"/>
+		<property name="maxRetries" value="${no.nav.sdp-kanal.legal.archive.maxRetries}"/>
+		<property name="retryIntervalInSeconds" value="${no.nav.sdp-kanal.legal.archive.retryIntervalInSeconds}"/>
+	</bean> -->
+	
+	<!-- MQ -->
+ 	<bean id="mqConnectionFactory" class="org.springframework.jndi.JndiObjectFactoryBean">
+		<property name="jndiName" value="java:/jboss/MQQM"/>
+		<property name="lookupOnStartup" value="true"/>
+		<property name="proxyInterface" value="javax.jms.ConnectionFactory"/>
+	</bean>
+ 	
+ 	<!-- Brukes for å kunne slå opp køer via JNDI -->
+	<bean id="jmsDestinationResolver" class="org.springframework.jms.support.destination.JndiDestinationResolver"/>
+ 	
+    <bean id="jtaTransactionManager" class="org.springframework.transaction.jta.JtaTransactionManager"/>
+    
+    <bean id="jmstx" class="org.apache.camel.component.jms.JmsComponent">
+    	<property name="configuration" ref="jmsConfig"/>
+    </bean>
+    
+    <bean id="jmsConfig" class="org.apache.camel.component.jms.JmsConfiguration">
+    	<property name="connectionFactory" ref="mqConnectionFactory"/>
+    	<property name="transactionManager" ref="jtaTransactionManager"/>
+    	<property name="transacted" value="true"/>
+    	<property name="transactionTimeout" value="1800"/>
+    	<property name="destinationResolver">
+    		<bean class="org.springframework.jms.support.destination.JndiDestinationResolver"/>
+    	</property>
+    	<property name="concurrentConsumers" value="${no.nav.sdpkanal.mq.concurrentConsumers}"/>
+    </bean>
+ 	
+ 	<!-- Finner enten elementet <digitalPostInfo> eller <fysiskPostInfo> i request-bodyen for å finne ut om meldingen er digital eller fysisk post -->
+ 	<bean id="findMessageType" class="no.nav.kanal.camel.FindMessageType">
+ 		<property name="legalArchive" ref="legalArchiveMelding"/>
+ 	</bean>
+ 	
+	<!-- Oppretter dokumentpakke og legger til dokumenter -->
+	<bean id="sendDigitalPostEnricher" class="no.nav.kanal.camel.SendDigitalPostEnricher">
+		<property name="remoteDokumentsPathPrefix" value="${no.nav.kanal.dokument.path.prefix}"/>
+		<property name="localDokumentsTempPath" value="${no.nav.kanal.dokument.tempPath}"/>
+		<property name="legalArchive" ref="legalArchiveMelding"/>
+	</bean>
+	
+	<!-- Signerer dokumentpakke -->
+	<bean id="dokumentpakkeSigner" class="no.nav.kanal.camel.DokumentpakkeSigner">
+		<property name="navKeyAndCert" ref="navKeysAndCert"/>
+		<property name="legalArchive" ref="legalArchiveMelding"/>
+	</bean>
+	
+	<!-- Signerer SBD -->
+	<bean id="sbdSigner" class="no.nav.kanal.camel.SBDSigner">
+		<property name="navKeyAndCert" ref="navKeysAndCert"/>
+		<property name="legalArchive" ref="legalArchiveMelding"/>
+	</bean>
+	
+	
+	<!-- Komponent for EBMS pull -->
+	<bean id="flameEbmsPull" class="no.nav.kanal.camel.ebms.FlameEbmsPull">
+		<property name="flamefactory" ref="flameEbms"/>
+		<property name="legalArchive" ref="legalArchiveKvittering"/>
+		<property name="mpcNormal" value="${ebms.mpc.normal}"/>
+		<property name="mpcPrioritert" value="${ebms.mpc.prioritert}"/>
+	</bean>
+	
+	<!-- Komponent for EBMS push -->
+	<bean id="flameEbmsPush" class="no.nav.kanal.camel.ebms.FlameEbmsPush">
+		<property name="flamefactory" ref="flameEbms"/>
+		<property name="partProperties">
+			<map>
+				<entry key="mimetype" value="application/cms"/>
+				<entry key="MimeType" value="application/cms"/>
+				<entry key="Content" value="sdp:Dokumentpakke"/>
+			</map>
+		</property>
+		<property name="ebmsFrom" value="${ebms.from}"/>
+		<property name="ebmsTo" value="${ebms.to}"/>
+		<property name="mpcNormal" value="${ebms.mpc.normal}"/>
+		<property name="mpcPrioritert" value="${ebms.mpc.prioritert}"/>
+		<property name="legalArchive" ref="legalArchiveMelding"/>
+		<property name="maxRetries" value="${ebms.push.maxRetries}"/>
+		<property name="retryIntervalInSeconds" value="${ebms.push.retryIntervalInSeconds}"/>
+	</bean>
+
+	
+	<!-- Logger til Juridisk logg at en utgående melding er lagt på BOQ -->
+	<bean id="boqLoggerMelding" class="no.nav.kanal.camel.BOQLogger">
+		<property name="legalArchive" ref="legalArchiveMelding"/>
+	</bean>
+	
+	<!-- Logger til Juridisk logg at en kvittering er lagt på BOQ -->
+	<bean id="boqLoggerKvittering" class="no.nav.kanal.camel.BOQLogger">
+		<property name="legalArchive" ref="legalArchiveKvittering"/>
+	</bean>
+	
+	<!-- Logger til Juridisk logg at en kvittering er lagt på kø -->
+	<bean id="kvitteringLogger" class="no.nav.kanal.camel.KvitteringLogger">
+		<property name="legalArchive" ref="legalArchiveKvittering"/>
+	</bean>
+	
+	<!-- Validerer signatur i kvitteringsmeldinger -->
+	<bean id="kvitteringValidator" class="no.nav.kanal.camel.KvitteringValidator">
+		<property name="legalArchive" ref="legalArchiveKvittering"/>
+		<property name="signatureValidator" ref="signatureValidator"/>
+	</bean>
+	
+	<!-- Sletter temp mappe ved feil og avslutning av meldingsrute -->
+	<bean id="deleteTempDir" class="no.nav.kanal.camel.DeleteTempDirectory"/>
+	
+	<!-- Avbryter behandling når transaction timeout detekteres  -->
+	<bean id="trantimeoutDetector" class="no.nav.kanal.camel.TransactionTimeoutDetector"/>
+	
+	<!-- Endrer shutdown timeout fra default=300 til 20 sekunder -->
+	<bean id="shutdown" class="org.apache.camel.impl.DefaultShutdownStrategy">
+		<property name="timeout" value="20"/>
+	</bean>
+	
+	<!-- Setter orginalmelding som In og legger til property -->
+	<bean id="boqReason" class="no.nav.kanal.camel.BOQReason"/>
+
+	<!-- Selftest bean -->
+	<bean id="selftest" scope="prototype" class="no.nav.kanal.selftest.SelfTest"/>
+	
+	<camelContext id="sdpkanal" xmlns="http://camel.apache.org/schema/spring">
+		<propertyPlaceholder id="properties" location="sdpkanal.properties" />
+		<jmxAgent id="jmxAgent" mbeanObjectDomainName="org.apache.camel" usePlatformMBeanServer="true" />
+
+		<!-- ENDPOINTS  -->
+		<endpoint id="MQSourceSDPPrioritet" uri="jmstx:queue:jms/queue/SDP_SEND_PRIORITERT" />
+		<endpoint id="MQDestSDPPrioritetBackout" uri="jms:queue:jms/queue/SDP_SEND_PRIORITERT_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
+		
+		<endpoint id="MQSourceSDPStandard" uri="jmstx:queue:jms/queue/SDP_SEND_STANDARD" />
+		<endpoint id="MQDestSDPStandardBackout" uri="jms:queue:jms/queue/SDP_SEND_STANDARD_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
+		
+		<endpoint id="MQDestKvitteringPrioritet" uri="jms:queue:jms/queue/SDP_KVITTERING_PRIORITERT?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
+		<endpoint id="MQDestKvitteringPrioritetBackout" uri="jms:queue:jms/queue/SDP_KVITTERING_PRIORITERT_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
+		
+		<endpoint id="MQDestKvitteringStandard" uri="jms:queue:jms/queue/SDP_KVITTERING_STANDARD?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
+		<endpoint id="MQDestKvitteringStandardBackout" uri="jms:queue:jms/queue/SDP_KVITTERING_STANDARD_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
+		
+		<endpoint id="ebmsPullNormal" uri="timer:ebmspullnormal?period=${ebms.pullinterval.normal}"/>
+		<endpoint id="ebmsPullPrioritert" uri="timer:ebmspullprioritert?period=${ebms.pullinterval.prioritert}"/>
+		
+		<dataFormats>
+			<jaxb id="sdpkanaljaxb" prettyPrint="true" contextPath="no.difi.begrep.sdp.schema_v10:no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.meldinger:no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1:org.unece.cefact.namespaces.standardbusinessdocumentheader:org.w3._2000._09.xmldsig_"/>
+		</dataFormats>
+		
+        <redeliveryPolicyProfile id="rpp" maximumRedeliveries="0" retryAttemptedLogLevel="WARN" redeliveryDelay="5000"  />
+        
+		<!-- Rute for å få lagt prioriterte meldinger på BOQ -->
+		<route id="dlqMeldingPrioritert">
+			<from uri="direct:dlqMeldingPrioritert"/>
+			<log loggingLevel="ERROR" message="EXCEPTION: Log and send to DLQ" />
+			<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
+			<bean ref="boqLoggerMelding" id="boqLoggerMeldingPrioritert"/>
+			<bean ref="deleteTempDir" id="deleteTempDirPrioritertBOQ"/>
+			<bean ref="boqReason"/>
+			<to uri="ref:MQDestSDPPrioritetBackout"/>
+		</route>
+		
+		<!-- Rute for å få lagt standard meldinger på BOQ -->
+		<route id="dlqMeldingStandard">
+			<from uri="direct:dlqMeldingStandard"/>
+			<log loggingLevel="ERROR" message="EXCEPTION: Log and send to DLQ" />
+			<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
+			<bean ref="boqLoggerMelding" id="boqLoggerMeldingStandard"/>
+			<bean ref="deleteTempDir" id="deleteTempDirStandardBOQ"/>
+			<bean ref="boqReason"/>
+			<to uri="ref:MQDestSDPStandardBackout"/>
+		</route>
+		
+		<!-- Rute for å sende prioritert DigitalPost -->
+		<route id="sendDigitalPostPrioritert">
+			 <from uri="ref:MQSourceSDPPrioritet"/>
+			 <onException>
+			 	<exception>java.lang.Exception</exception>
+			 	<handled>
+					<constant>true</constant>
+				</handled>
+			 	<to uri="direct:dlqMeldingPrioritert"/>
+			 </onException>
+			 <unmarshal ref="sdpkanaljaxb" id="XMLToJAXBPrioritert"/>
+			 <bean ref="findMessageType" id="findMessageTypePrioritert"/>
+			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherPrioritert"/>
+			 <bean ref="dokumentpakkeSigner" id="dokumentpakkeSignerPrioritert"/>
+			 <bean ref="dokumentpakkeEncrypter" id="dokumentpakkeEncrypterPrioritert"/>
+			 <bean ref="sbdSigner" id="sbdSignerPrioritert"/>
+<!-- 			 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
+			 <bean ref="flameEbmsPush" id="flameEbmsPushPrioritert"/>
+			 <bean ref="deleteTempDir" id="deleteTempDirPrioritert"/>
+		</route>
+		
+		<!-- Rute for å sende standard digital- eller fysisk post -->
+		<route id="sendDigitalPostStandard">
+			 <from uri="ref:MQSourceSDPStandard"/>
+			 <onException>
+			 	<exception>java.lang.Exception</exception>
+			 	<handled>
+					<constant>true</constant>
+				</handled>
+			 	<to uri="direct:dlqMeldingStandard"/>
+			 </onException>
+			 <unmarshal ref="sdpkanaljaxb" id="XMLToJAXB"/>
+			 <bean ref="findMessageType" id="findMessageTypeStandard"/>
+			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherStandard"/>
+			 <bean ref="dokumentpakkeSigner" id="dokumentpakkeSignerStandard"/>
+			 <bean ref="dokumentpakkeEncrypter" id="dokumentpakkeEncrypterStandard"/>
+			 <bean ref="sbdSigner" id="sbdSignerStandard"/>
+<!-- 		 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
+			 <bean ref="flameEbmsPush" id="flameEbmsPushStandard"/>
+			 <bean ref="deleteTempDir" id="deleteTempDirStandard"/>
+		</route>
+		
+		<!-- Rute for pulling av kvitteringer fra standard MPC. Startes med timer. -->
+		<route id="ebmsPullNormal_loop" messageHistory="false" autoStartup="true">
+			<from uri="ref:ebmsPullNormal"/>
+			<setHeader headerName="LOOP_INDICATOR_NORMAL" id="LOOP_INDICATOR_NORMAL">
+				<constant>direct:normal_pull</constant>
+			</setHeader>
+			<setHeader headerName="antall_meldinger" id="reset_antall_meldinger_normal">
+				<constant>0</constant>
+			</setHeader>
+			<dynamicRouter>
+				<header>LOOP_INDICATOR_NORMAL</header>
+			</dynamicRouter>
+			<log loggingLevel="INFO" message="End of pullrequest cycle for normal. No more messages. Fetched ${in.header.antall_meldinger} messages" />
+			<delay id="pullDelayNormal">
+			 	<simple>{{ebms.pullinterval.normal}}</simple>
+			 </delay>
+		</route>
+		
+		<!-- Rute for en pull-cycle fra standard MPC. -->
+		<route id="ebmsPullNormal_single" messageHistory="false">
+			<from uri="direct:normal_pull"/>
+			<setHeader headerName="MPC" id="setHeader MPC normal">
+				<constant>urn:normal</constant>
+			</setHeader>
+			<bean ref="flameEbmsPull" id="flameEbmsPullNormal"/>
+			<choice>
+				<when>
+					<header>LOOP_INDICATOR_NORMAL</header>
+					<doTry>
+			 			<bean ref="kvitteringValidator" id="kvitteringValidatorNormal"/>
+						<to uri="MQDestKvitteringStandard"/>
+						<bean ref="kvitteringLogger" id="kvitteringLoggerNormal"/>
+						<setHeader headerName="antall_meldinger" id="inc_antall_meldinger_normal">
+							<simple>${in.header.antall_meldinger}++</simple>
+						</setHeader>
+						<to uri="metrics:counter:ebmsPullNormal.antall"/>
+						<doCatch>
+							<exception>java.lang.Exception</exception>
+							<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
+							<log message="Verification of message received in pull FAILED" loggingLevel="ERROR" logName="no.nav.kanal"/>
+							<bean ref="boqLoggerKvittering" id="boqLoggerKvitteringNormal"/>
+							<to uri="MQDestKvitteringStandardBackout"/>
+						</doCatch>
+					</doTry>
+				</when>
+				<otherwise>
+					<log loggingLevel="INFO" message="End of pullrequest cycle for normal. No message sent to queue." />
+				</otherwise>
+			</choice>
+			<log loggingLevel="INFO" message="Single pull done for normal" />
+		</route>
+		
+		<!-- Rute for pulling av kvitteringer fra prioritert MPC -->
+		<route id="ebmsPullPrioritert_loop" messageHistory="false" autoStartup="true">
+			<from uri="ref:ebmsPullPrioritert"/>
+			<setHeader headerName="LOOP_INDICATOR_PRIORITERT" id="LOOP_INDICATOR_PRIORITERT">
+				<constant>direct:prioritert_pull</constant>
+			</setHeader>
+			<setHeader headerName="antall_meldinger" id="reset_antall_meldinger_prioritert">
+				<constant>0</constant>
+			</setHeader>
+			<dynamicRouter>
+				<header>LOOP_INDICATOR_PRIORITERT</header>
+			</dynamicRouter>
+			<log loggingLevel="INFO" message="End of pullrequest cycle for prioritert. No more messages. Fetched ${in.header.antall_meldinger} messages" />
+			<delay id="pullDelayPrioritert">
+			 	<simple>{{ebms.pullinterval.prioritert}}</simple>
+			 </delay>
+		</route>
+		
+		<!-- Rute for en pull-cycle fra prioritert MPC. -->
+		<route id="ebmsPullPrioritert_single" messageHistory="false">
+			<from uri="direct:prioritert_pull"/>
+			<setHeader headerName="MPC">
+				<constant>urn:prioritert</constant>
+			</setHeader>
+			<bean ref="flameEbmsPull" id="flameEbmsPullPrioritert"/>
+			<choice>
+				<when>
+					<header>LOOP_INDICATOR_PRIORITERT</header>
+					<doTry>
+			 			<bean ref="kvitteringValidator" id="kvitteringValidatorPrioritert"/>
+						<to uri="MQDestKvitteringPrioritet"/>
+						<bean ref="kvitteringLogger" id="kvitteringLoggerPrioritert"/>
+						<setHeader headerName="antall_meldinger" id="inc_antall_meldinger_prioritert">
+							<simple>${in.header.antall_meldinger}++</simple>
+						</setHeader>
+						<to uri="metrics:counter:ebmsPullPrioritert.antall"/>
+						<doCatch>
+							<exception>java.lang.Exception</exception>
+							<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
+							<log message="Verification of message received in pull FAILED" loggingLevel="ERROR" logName="no.nav.kanal"/>
+							<bean ref="boqLoggerKvittering" id="boqLoggerKvitteringPrioritert"/>
+							<to uri="MQDestKvitteringPrioritetBackout"/>
+						</doCatch>
+					</doTry>
+				</when>
+				<otherwise>
+					<log loggingLevel="INFO" message="End of pullrequest cycle for prioritert. No message sent to queue." />
+				</otherwise>
+			</choice>
+			<log loggingLevel="INFO" message="Single pull done for prioritert" />
+		</route>
+	
+	</camelContext>
+
+</beans>
