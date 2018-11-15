@@ -1,0 +1,8 @@
+c:/
+target/
+*.iml
+.idea/
+release.properties
+pom.xml.releaseBackup
+.DS_Store
+

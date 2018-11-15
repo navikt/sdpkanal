@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<pmode:ProcessingMode pmode:ID="nav-digital-post-ack" xmlns:tg="http://fms.flame.co.za/FMS/schema/Trigger" xmlns:pmode="http://fms.flame.co.za/FMS/schema/ProcessingMode" >
+  <!-- Copyright (c) Flame Computing Enterprises cc 2007 - 2013. All rights reserved -->
+  <pmode:specification>AS4</pmode:specification>
+
+  <pmode:general>
+
+    <pmode:Agreement>http://begrep.difi.no/SikkerDigitalPost/Meldingsutveksling/KvitteringsForespoersel</pmode:Agreement>
+    <!-- <pmode:ConversationID>1</pmode:ConversationID> -->
+    <pmode:MEP>http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/oneWay</pmode:MEP>
+    <pmode:MEPbinding>http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/pull</pmode:MEPbinding>
+
+	<pmode:initiating>
+      <pmode:party pmode:type="urn:oasis:names:tc:ebcore:partyid-type:iso6523:9908">9908:889640782</pmode:party>
+      <pmode:role>urn:sdp:avsender</pmode:role>
+    </pmode:initiating>
+
+    <pmode:responding>
+      <pmode:party pmode:type="urn:oasis:names:tc:ebcore:partyid-type:iso6523:9908">9908:984661185</pmode:party>
+      <pmode:role>urn:sdp:meldingsformidler</pmode:role>
+    </pmode:responding>
+
+  </pmode:general>
+
+  <pmode:event pmode:ID="HentKvittering">
+    <pmode:protocol>
+	  <!-- <pmode:address>https://qaoffentlig.meldingsformidler.digipost.no/api/</pmode:address> -->
+      <pmode:SOAPVersion>1.2</pmode:SOAPVersion>
+      <pmode:useCompression>false</pmode:useCompression> <!-- not used by the AS4 light and minimal client -->
+      <pmode:retryThreshold>0</pmode:retryThreshold>
+      <pmode:retryInterval>60</pmode:retryInterval>
+    </pmode:protocol>
+    <pmode:businessInfo>
+      <pmode:service>SDP</pmode:service>
+      <pmode:action>KvitteringsForespoersel</pmode:action>
+      <pmode:maxSize>0</pmode:maxSize>
+      <!-- <pmode:MPC>urn:sdp:prioritet:identifier:9999:avsenderidentifikator:nav</pmode:MPC> -->
+      <pmode:PayloadProfile>
+        <pmode:ContentID></pmode:ContentID>
+        <pmode:mimeType>application/xml</pmode:mimeType>
+        <pmode:schemaFile></pmode:schemaFile>
+        <pmode:maxSize>0</pmode:maxSize>
+        <pmode:usage>expected</pmode:usage>
+      </pmode:PayloadProfile>
+    </pmode:businessInfo>
+    <pmode:security>
+      <pmode:WSSVersion>1.1</pmode:WSSVersion>
+      <pmode:SOAPSecurityLevel>SIGN</pmode:SOAPSecurityLevel>
+      <pmode:MIMESecurityLevel>NONE</pmode:MIMESecurityLevel>
+      <pmode:X509>
+        <pmode:signature>
+          <!-- CanonicalizationMethod - defaults to  http://www.w3.org/2001/10/xml-exc-c14n# - defined by server property SIGNATURE_CANONICALISATION_ALGORITHM -->
+          <pmode:algorithm>http://www.w3.org/2000/09/xmldsig#rsa-sha256</pmode:algorithm> <!-- SignatureMethod - defined by server property SIGNATURE_ALGORITHM -->
+          <pmode:hashFunction>http://www.w3.org/2001/04/xmlenc#sha256</pmode:hashFunction> <!-- DigestMethod as used for all targets - defined by server property SIGNATURE_DIGEST_ALGORITHM -->
+          <pmode:CryptPart pmode:namespace="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/">
+            <pmode:element>Messaging</pmode:element>
+          </pmode:CryptPart>
+        </pmode:signature>
+        <pmode:encryption>
+          <pmode:algorithm>http://www.w3.org/2001/04/xmlenc#rsa-1_5</pmode:algorithm>
+          <pmode:certificate></pmode:certificate>
+          <!-- <pmode:minimumStrength>256</pmode:minimumStrength> supported but not used here -->
+          <pmode:CryptPart pmode:namespace="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/">
+            <pmode:element>CollaborationInfo</pmode:element>
+            <pmode:element>PayloadInfo</pmode:element>
+            <pmode:element>MessageProperties</pmode:element>
+          </pmode:CryptPart>
+        </pmode:encryption>
+      </pmode:X509>
+      <pmode:usernameToken>
+        <pmode:PModeAuthorize>false</pmode:PModeAuthorize>
+        <pmode:username></pmode:username>
+        <pmode:password></pmode:password>
+        <pmode:digest>false</pmode:digest>
+        <pmode:nonce>false</pmode:nonce>
+        <pmode:created>false</pmode:created>
+      </pmode:usernameToken>
+      <pmode:sendReceipt>
+        <pmode:enabled>true</pmode:enabled>
+        <pmode:replyPattern>response</pmode:replyPattern>
+		<!-- <pmode:replyPattern>callback</pmode:replyPattern> -->
+		<pmode:nonRepudiation>true</pmode:nonRepudiation>
+      </pmode:sendReceipt>
+    </pmode:security>
+  </pmode:event>
+</pmode:ProcessingMode>
+

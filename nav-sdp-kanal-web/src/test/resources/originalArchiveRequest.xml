@@ -1,0 +1,19 @@
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:arc="http://nav.no/emottak/archiver">
+	<soapenv:Header />
+	<soapenv:Body>
+		<arc:LogAndArchiveRequest>
+			<arc:message>
+				<wsa:Action xmlns:wsa="http://www.w3.org/2005/08/addressing">urn:skatteetaten:fastsetting:innsamling:meldingsproduksjon:a-nav-inntekt-spoerring:soap:v1:hentInntektsmottakersInntekt</wsa:Action>
+				<wsa:MessageID xmlns:wsa="http://www.w3.org/2005/08/addressing">?</wsa:MessageID>
+				<arc:serviceConsumer>urn:sdp:avsender</arc:serviceConsumer>
+				<arc:serviceProducer>urn:sdp:meldingsformidler</arc:serviceProducer>
+			</arc:message>
+			<arc:event>
+				<arc:eventNo>127</arc:eventNo>
+				<arc:desc>sdp-gw-u3: Melding mottatt fra dokumentdistribusjon</arc:desc>
+				<arc:caller>Datapower: sdp-gw</arc:caller>
+			</arc:event>
+		</arc:LogAndArchiveRequest>
+	</soapenv:Body>
+</soapenv:Envelope>

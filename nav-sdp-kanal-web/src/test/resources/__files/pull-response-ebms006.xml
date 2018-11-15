@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+	<env:Header>
+		<eb:Messaging xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" env:mustUnderstand="true" wsu:Id="id-ef0d1798-fe86-4072-ab76-6bd5967b9150">
+			<ns6:SignalMessage xmlns:ns6="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/" xmlns:ns2="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:ns3="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" xmlns:ns4="http://www.w3.org/2003/05/soap-envelope" xmlns:ns5="http://www.w3.org/2000/09/xmldsig#" xmlns:ns7="http://docs.oasis-open.org/ebxml-bp/ebbp-signals-2.0" xmlns:ns8="http://www.w3.org/1999/xlink" xmlns:ns9="http://begrep.difi.no/sdp/schema_v10">
+				<ns6:MessageInfo>
+					<ns6:Timestamp>2014-05-28T10:18:47.361+02:00</ns6:Timestamp>
+					<ns6:MessageId>86afa3c2-d3c1-4303-ba67-cddf92b7bd6e</ns6:MessageId>
+					<ns6:RefToMessageId>AS4-14641E8FB76-70694@9908:889640782</ns6:RefToMessageId>
+				</ns6:MessageInfo>
+				<ns6:Error category="Communication" errorCode="EBMS:0006" origin="ebMS" severity="warning" shortDescription="EmptyMessagePartitionChannel">
+					<ns6:Description xml:lang="en">There is no message available for pulling from this MPC at this moment.</ns6:Description>
+				</ns6:Error>
+			</ns6:SignalMessage>
+		</eb:Messaging>
+		<eb:Messaging xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" env:mustUnderstand="true" wsu:Id="id-61c36827-a5ee-48c0-99be-25ead981bb03"/>
+	</env:Header>
+	<env:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="id-6af3743f-3bee-4587-97c4-9653b4986013"/>
+</env:Envelope>

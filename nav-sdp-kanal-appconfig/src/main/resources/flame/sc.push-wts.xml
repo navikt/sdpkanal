@@ -1,0 +1,28 @@
+<xwss:SecurityConfiguration dumpMessages='true' retainSecurityHeader='true' enableDynamicPolicy='false' xmlns:xwss='http://java.sun.com/xml/ns/xwss/config'>
+  <xwss:Timestamp timeout="7200"/> <!-- manual signing of timestamp -->
+  <xwss:Sign includeTimestamp="false"> <!-- set this to false to ensure no sha1 sig is added -->
+    <xwss:X509Token certificateAlias='fmsrns'/>
+    <xwss:CanonicalizationMethod algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'/>
+    <xwss:SignatureMethod algorithm='http://www.w3.org/2001/04/xmldsig-more#rsa-sha256'/>
+    <xwss:SignatureTarget type="qname" value="{http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd}Timestamp">
+      <xwss:DigestMethod algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/>
+      <xwss:Transform algorithm="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+    </xwss:SignatureTarget>
+    <xwss:SignatureTarget type='uri' value='cid:*' enforce='false'>
+      <xwss:DigestMethod algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/>
+      <xwss:Transform algorithm='http://docs.oasis-open.org/wss/oasis-wss-SwAProfile-1.1#Attachment-Content-Signature-Transform'/>
+    </xwss:SignatureTarget>
+    <xwss:SignatureTarget type='qname' value='{http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/}Messaging' enforce='false'>
+      <xwss:DigestMethod algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/>
+      <xwss:Transform algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+        <xwss:AlgorithmParameter name="InclusiveNamespaces" value="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+      </xwss:Transform>
+    </xwss:SignatureTarget>
+    <xwss:SignatureTarget type='qname' value='{http://www.w3.org/2003/05/soap-envelope}Body' enforce="false">
+      <xwss:DigestMethod algorithm='http://www.w3.org/2001/04/xmlenc#sha256'/>
+      <xwss:Transform algorithm='http://www.w3.org/2001/10/xml-exc-c14n#'>
+        <xwss:AlgorithmParameter name="InclusiveNamespaces" value="http://www.w3.org/2001/10/xml-exc-c14n#"/>
+      </xwss:Transform>
+    </xwss:SignatureTarget>
+  </xwss:Sign>
+</xwss:SecurityConfiguration>

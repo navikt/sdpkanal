@@ -1,0 +1,106 @@
+<v1:sendDigitalPost xmlns:v1="http://nav.no/tjeneste/virksomhet/digitalpost/sendDigitalPost/v1" xmlns:stan="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" xmlns:sch="http://begrep.difi.no/sdp/schema_v10" xmlns:ns5="http://www.w3.org/2000/09/xmldsig#">
+	 <sendDigitalPostRequest>
+		<standardBusinessDocument>
+		   <!--Optional:-->
+		   <stan:StandardBusinessDocumentHeader>
+			  <stan:HeaderVersion>?</stan:HeaderVersion>
+			  <!--1 or more repetitions:-->
+			  <stan:Sender>
+				 <stan:Identifier Authority="?">?</stan:Identifier>
+				 <!--Zero or more repetitions:-->
+			  </stan:Sender>
+			  <!--1 or more repetitions:-->
+			  <stan:Receiver>
+				 <stan:Identifier Authority="?">?</stan:Identifier>
+				 <!--Zero or more repetitions:-->
+				 <stan:ContactInformation>
+					<stan:Contact>?</stan:Contact>
+					<!--Optional:-->
+					<stan:EmailAddress>?</stan:EmailAddress>
+					<!--Optional:-->
+					<stan:FaxNumber>?</stan:FaxNumber>
+					<!--Optional:-->
+					<stan:TelephoneNumber>?</stan:TelephoneNumber>
+					<!--Optional:-->
+					<stan:ContactTypeIdentifier>?</stan:ContactTypeIdentifier>
+				 </stan:ContactInformation>
+			  </stan:Receiver>
+			  <stan:DocumentIdentification>
+				 <stan:Standard>?</stan:Standard>
+				 <stan:TypeVersion>?</stan:TypeVersion>
+				 <stan:InstanceIdentifier>?</stan:InstanceIdentifier>
+				 <stan:Type>?</stan:Type>
+				 <!--Optional:-->
+				 <stan:MultipleType>1</stan:MultipleType>
+				 <stan:CreationDateAndTime>2011-10-10T10:11:10</stan:CreationDateAndTime>
+			  </stan:DocumentIdentification>
+			  <stan:BusinessScope>
+			    <stan:Scope>
+			      <stan:Type>ConversationId</stan:Type>
+<!-- 			      <stan:InstanceIdentifier>SDP-TEST-ID-1234</stan:InstanceIdentifier> -->
+			      <stan:Identifier>urn:no:difi:sdp:1.0</stan:Identifier>
+			    </stan:Scope>
+			  </stan:BusinessScope>
+			  <!--Optional:-->
+		   </stan:StandardBusinessDocumentHeader>
+		   <!--You may enter ANY elements at this point-->
+		   <sch:digitalPost>
+		   		<sup:Signature xmlns:sup="http://www.w3.org/2000/09/xmldsig#"/>
+		   		<sch:avsender>
+					<sch:organisasjon authority="iso6523-actorid-upis">9908:889640782</sch:organisasjon>
+				</sch:avsender>
+				<sch:mottaker>
+					<sch:person>
+						<sch:personidentifikator>Joni-sneve</sch:personidentifikator>
+						<sch:postkasseadresse>joni.sneve#251T</sch:postkasseadresse>
+					</sch:person>
+				</sch:mottaker>
+				<sch:digitalPostInfo>
+					<sch:aapningskvittering>false</sch:aapningskvittering>
+					<sch:sikkerhetsnivaa>3</sch:sikkerhetsnivaa>
+					<sch:ikkeSensitivTittel>Ikke-sensitiv tittel for forsendelsen</sch:ikkeSensitivTittel>
+					<sch:varsler/>
+				</sch:digitalPostInfo>
+				<sch:dokumentpakkefingeravtrykk>
+					<ns5:DigestMethod Algorithm=""/>
+					<ns5:DigestValue></ns5:DigestValue>
+				</sch:dokumentpakkefingeravtrykk>
+			</sch:digitalPost>
+		</standardBusinessDocument>
+		<manifest>
+		   <sch:mottaker>
+			  <!--You have a CHOICE of the next 2 items at this level-->
+			  <sch:person>
+				 <sch:personidentifikator>12345678901</sch:personidentifikator>
+				 <sch:postkasseadresse>0881</sch:postkasseadresse>
+			  </sch:person>
+		   </sch:mottaker>
+		   <sch:avsender>
+			  <sch:organisasjon authority="iso6523-actorid-upis">1234:123456789</sch:organisasjon>
+			  <!--Optional:-->
+			  <sch:avsenderidentifikator>?</sch:avsenderidentifikator>
+			  <!--Optional:-->
+			  <sch:fakturaReferanse>?</sch:fakturaReferanse>
+		   </sch:avsender>
+		   <sch:hoveddokument href="S140744-72169056-210214-1848-268.pdf" mime="application/pdf">
+			  <!--Optional:-->
+			  <sch:tittel lang="NO">Viktig Dokument</sch:tittel>
+		   </sch:hoveddokument>
+		   <!--0 to 99 repetitions:-->
+		   <sch:vedlegg href="undermappe/viktigePassord.txt" mime="text/plain">
+			  <!--Optional:-->
+			  <sch:tittel lang="NO">Vedlegg nr 1</sch:tittel>
+		   </sch:vedlegg>
+		   <sch:vedlegg href="viktigePassord.7z" mime="application/x-7z-compressed">
+			  <!--Optional:-->
+			  <sch:tittel lang="NO">Vedlegg nr 2</sch:tittel>
+		   </sch:vedlegg>
+		   <sch:vedlegg href="feil oppstart.png" mime="image/png">
+			  <!--Optional:-->
+			  <sch:tittel lang="NO">Vedlegg nr 3</sch:tittel>
+		   </sch:vedlegg>
+		</manifest>
+		<sertifikat>MIIE+DCCA+CgAwIBAgIKGQiM/jonpcG0VTANBgkqhkiG9w0BAQsFADBRMQswCQYDVQQGEwJOTzEdMBsGA1UECgwUQnV5cGFzcyBBUy05ODMxNjMzMjcxIzAhBgNVBAMMGkJ1eXBhc3MgQ2xhc3MgMyBUZXN0NCBDQSAzMB4XDTE0MDYxMjEzNTYzOFoXDTE3MDYxMjIxNTkwMFowXzELMAkGA1UEBhMCTk8xEjAQBgNVBAoMCUUtQk9LUyBBUzEUMBIGA1UECwwLT3BlcmF0aW9uIDExEjAQBgNVBAMMCUUtQk9LUyBBUzESMBAGA1UEBRMJOTk2NDYwMzIwMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArDwI/8AEOlml4abZt+zXRTxQuzuWTVx8QS2a2zE0BdUE+PO3K8QQpfPzIZVHSrhiDr03VRW2zJ5qz2peGhwNw1BRBltndJLuSJBqSdfJ2TbayoBQoHJkg7YvPi11LsM2aYE75tiKN/FUqKIgqMiOz0rbTyjOcNI1cD6ZC0xskZN1ONJqG5Jxqc3NOpPTco/YA7s41v1gUPdPfoXlu5tgnmiMh4Ixwr7x7FK80aj3Akg0eWmHI8P1IxJU8hJI6sthYO0Z2d8RCLeXIc4pXAkRBvgKC8I8HEYk6pDxR3UvFlwC96Mj4Ne0EN8yo3ODtT1chPp7iyUPiDvNhqSRrp8GEQIDAQABo4IBwjCCAb4wCQYDVR0TBAIwADAfBgNVHSMEGDAWgBQ/rvV4C5KjcCA1X1r69ySgUgHwQTAdBgNVHQ4EFgQUBL6S6KHLV/uxUDs5bB6n3jZUP/4wDgYDVR0PAQH/BAQDAgSwMBYGA1UdIAQPMA0wCwYJYIRCARoBAAMCMIG7BgNVHR8EgbMwgbAwN6A1oDOGMWh0dHA6Ly9jcmwudGVzdDQuYnV5cGFzcy5uby9jcmwvQlBDbGFzczNUNENBMy5jcmwwdaBzoHGGb2xkYXA6Ly9sZGFwLnRlc3Q0LmJ1eXBhc3Mubm8vZGM9QnV5cGFzcyxkYz1OTyxDTj1CdXlwYXNzJTIwQ2xhc3MlMjAzJTIwVGVzdDQlMjBDQSUyMDM/Y2VydGlmaWNhdGVSZXZvY2F0aW9uTGlzdDCBigYIKwYBBQUHAQEEfjB8MDsGCCsGAQUFBzABhi9odHRwOi8vb2NzcC50ZXN0NC5idXlwYXNzLm5vL29jc3AvQlBDbGFzczNUNENBMzA9BggrBgEFBQcwAoYxaHR0cDovL2NydC50ZXN0NC5idXlwYXNzLm5vL2NydC9CUENsYXNzM1Q0Q0EzLmNlcjANBgkqhkiG9w0BAQsFAAOCAQEARj4WegvcMeqvt8R2BxB/uoNIjATmoUxlUc1f/vLkqq0fNGMtRDAJWlQJ26P6Q+05G+85mK0DkRNWEjZNnX/NzMijygYwgHc0KukMoIVfYngc02Vnp2QNk5YC+EGF3WjtuD9D653WkA/eKXNGEkyKPO4Okgr5akDWqUORH2ZvgyIg+r/fAScTxj8YhAdooXBh5TSQqWyyCLxspY7TY/qiQ5Yk1nQTUIkrBh3UD2VSeR+ymozO9DxzboFRh87BgoT0c9scVo7yWpEkMcjUdZnpvqDQ0vtKFHz/VR7JfRFWpx7JG4CsxDCnMjfCd/jSllWUjrUmKVj7es8CqXcQnjTUZg==</sertifikat>
+		<erPrioritert>false</erPrioritert>
+	 </sendDigitalPostRequest>
+</v1:sendDigitalPost>

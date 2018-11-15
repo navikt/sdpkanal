@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:jee="http://www.springframework.org/schema/jee"
+	xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context.xsd
+	http://www.springframework.org/schema/jee
+	http://www.springframework.org/schema/jee/spring-jee.xsd
+	http://camel.apache.org/schema/spring
+	http://camel.apache.org/schema/spring/camel-spring.xsd">
+
+	<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveLoggerMock">
+		<property name="logCaller" value="JBOSS: SDP-kanal"/>
+		<property name="logAction" value="urn:skatteetaten:fastsetting:innsamling:meldingsproduksjon:a-nav-inntekt-spoerring:soap:v1:hentInntektsmottakersInntekt"/>
+		<property name="logServiceConsumer" value="urn:sdp:avsender"/>
+		<property name="logServiceProducer" value="urn:sdp:meldingsformidler"/>
+		<property name="logEndpoint" value="http://e26apvl028.test.local:9089/nav-emottak-archiver-web/services/archiver"/>
+		<property name="logUsername" value="srvsdpgw_u"/>
+		<property name="logPassword" value="dfwYokIJ83-suyq"/>
+		<property name="maxRetries" value="4"/>
+		<property name="retryIntervalInSeconds" value="1"/>
+	</bean>
+	
+	
+	<bean id="boqLogger" class="no.nav.kanal.camel.BOQLogger">
+		<property name="legalArchive" ref="legalArchiveMelding"/>
+	</bean>
+	
+	
+	<camelContext xmlns="http://camel.apache.org/schema/spring" trace="false">
+		
+		<route id="testBOQLogger">
+			<from uri="direct:start"/>
+			<bean ref="boqLogger"/>
+			<to uri="mock:result"/>
+		</route>
+	</camelContext>
+
+</beans>

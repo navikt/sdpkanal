@@ -1,0 +1,38 @@
+<env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope">
+	<env:Header>
+		<eb:Messaging xmlns:eb="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/" xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" env:mustUnderstand="true" wsu:Id="id-4e172b2e-39f4-418f-aa80-760bfaf05550">
+			<ns6:SignalMessage xmlns:ns6="http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/" xmlns:ns10="http://uri.etsi.org/2918/v1.2.1#" xmlns:ns11="http://uri.etsi.org/01903/v1.3.2#" xmlns:ns2="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns3="http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader" xmlns:ns4="http://www.w3.org/2003/05/soap-envelope" xmlns:ns5="http://www.w3.org/2000/09/xmldsig#" xmlns:ns7="http://docs.oasis-open.org/ebxml-bp/ebbp-signals-2.0" xmlns:ns8="http://www.w3.org/1999/xlink" xmlns:ns9="http://begrep.difi.no/sdp/schema_v10">
+				<ns6:MessageInfo>
+					<ns6:Timestamp>2014-10-02T10:33:49.606+02:00</ns6:Timestamp>
+					<ns6:MessageId>f71051c4-08b9-4042-b908-b9a9b2c442e3</ns6:MessageId>
+					<ns6:RefToMessageId>b62d2c9e-63d3-47c8-a87f-2a6e63b29edb</ns6:RefToMessageId>
+				</ns6:MessageInfo>
+				<ns6:Receipt>
+					<ns7:NonRepudiationInformation>
+						<ns7:MessagePartNRInformation>
+							<ns5:Reference URI="#XWSSGID-1412238829428-1689062956">
+								<ns5:Transforms>
+									<ns5:Transform Algorithm="http://www.w3.org/2001/10/xml-exc-c14n#">
+										<InclusiveNamespaces:InclusiveNamespaces xmlns:InclusiveNamespaces="http://www.w3.org/2001/10/xml-exc-c14n#" xmlns="http://www.w3.org/2001/10/xml-exc-c14n#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" xmlns:ebbpsig="http://docs.oasis-open.org/ebxml-bp/ebbp-signals-2.0" xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd" PrefixList="ds eb ebbpsig env wsu ns2 ns3"/>
+									</ns5:Transform>
+								</ns5:Transforms>
+								<ns5:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+								<ns5:DigestValue>1xD5QSmJZcADefbQGjyZWqbIuV/SurI7QARlA31oeNA=</ns5:DigestValue>
+							</ns5:Reference>
+						</ns7:MessagePartNRInformation>
+						<ns7:MessagePartNRInformation>
+							<ns5:Reference URI="cid:148CFFE66FF-151CB">
+								<ns5:Transforms>
+									<ns5:Transform Algorithm="http://docs.oasis-open.org/wss/oasis-wss-SwAProfile-1.1#Attachment-Content-Signature-Transform"/>
+								</ns5:Transforms>
+								<ns5:DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"/>
+								<ns5:DigestValue>DfAzut8UUd1w4ieDfJlqZizUbUVhoc+m0bkkBaTLK3s=</ns5:DigestValue>
+							</ns5:Reference>
+						</ns7:MessagePartNRInformation>
+					</ns7:NonRepudiationInformation>
+				</ns6:Receipt>
+			</ns6:SignalMessage>
+		</eb:Messaging>
+	</env:Header>
+	<env:Body xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd" wsu:Id="id-113d6ed5-ab63-4a8f-a644-92e6669c439f"/>
+</env:Envelope>
