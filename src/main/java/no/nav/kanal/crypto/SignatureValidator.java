@@ -16,7 +16,9 @@ import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.SendDigitalPost
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
+@Service
 public class SignatureValidator {
 	
 	private static Logger log = LoggerFactory.getLogger(SignatureValidator.class);

@@ -1,4 +1,4 @@
-<xwss:SecurityConfiguration retainSecurityHeader='true' enableDynamicPolicy='false' xmlns:xwss='http://java.sun.com/xml/ns/xwss/config'>
+<xwss:SecurityConfiguration dumpMessages='false' retainSecurityHeader='true' enableDynamicPolicy='false' xmlns:xwss='http://java.sun.com/xml/ns/xwss/config'>
   <xwss:Timestamp/> <!-- manual signing of timestamp -->
   <xwss:Sign includeTimestamp="false"> <!-- set this to false to ensure no sha1 sig is added -->
     <xwss:X509Token certificateAlias='fmsrns'/>

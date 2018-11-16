@@ -16,8 +16,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Service;
 
-@Configuration
+@Service
 public class NavKeysAndCertificates {
 	private static Logger log = LoggerFactory.getLogger(NavKeysAndCertificates.class);
 
@@ -25,7 +26,10 @@ public class NavKeysAndCertificates {
 	private Key signingKey;
 
 	@Autowired
-	public NavKeysAndCertificates(@Value("${no.nav.sdpkanal.keystore}") String keystoreFile, VaultCredentials credentials) throws Exception {
+	public NavKeysAndCertificates(
+			@Value("${no.nav.sdpkanal.keystore}") String keystoreFile,
+			VaultCredentials credentials
+	) throws Exception {
 			KeyStore keystore = loadKeystore(new File(keystoreFile), credentials.getVirksomhetKeystorePassword());
 			log.info("Loading NAV certificate chain from alias: " + credentials.getVirksomhetKeystoreAlias());
 			Certificate[] certs = keystore.getCertificateChain(credentials.getVirksomhetKeystoreAlias());

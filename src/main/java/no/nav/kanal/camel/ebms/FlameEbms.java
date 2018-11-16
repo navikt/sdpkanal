@@ -82,8 +82,4 @@ public class FlameEbms {
 	public String getKeyPassword() {
 		return keyPassword;
 	}
-
-	static String readSecurityContext(String path) throws IOException {
-		return IOUtils.toString(FlameEbms.class.getResourceAsStream(path), Charset.forName("UTF-8"));
-	}
 }

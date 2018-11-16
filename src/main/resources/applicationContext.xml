@@ -30,7 +30,7 @@
 	<bean id="sdpkanalMetrics" class="no.nav.kanal.metrics.Metrics"/>
 	
 	<!-- LEGAL ARCHIVE for outgoing messages -->
-	<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveLoggerMock" />
+	<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveStub" />
 	<!--<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveLoggerImpl">
 		<property name="logCaller" value="${no.nav.kanal.log.logCaller}"/>
 		<property name="logAction" value="${no.nav.kanal.log.melding.logAction}"/>
@@ -44,7 +44,7 @@
 	</bean>-->
 	
 	<!-- LEGAL ARCHIVE for kvitteringer -->
-	<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveLoggerMock" />
+	<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveStub" />
 	<!--<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveLoggerImpl">
 		<property name="logCaller" value="${no.nav.kanal.log.logCaller}"/>
 		<property name="logAction" value="${no.nav.kanal.log.kvittering.logAction}"/>
@@ -56,31 +56,16 @@
 		<property name="maxRetries" value="${no.nav.sdp-kanal.legal.archive.maxRetries}"/>
 		<property name="retryIntervalInSeconds" value="${no.nav.sdp-kanal.legal.archive.retryIntervalInSeconds}"/>
 	</bean> -->
-	
-	<!-- MQ -->
- 	<bean id="mqConnectionFactory" class="org.springframework.jndi.JndiObjectFactoryBean">
-		<property name="jndiName" value="java:/jboss/MQQM"/>
-		<property name="lookupOnStartup" value="true"/>
-		<property name="proxyInterface" value="javax.jms.ConnectionFactory"/>
-	</bean>
- 	
- 	<!-- Brukes for å kunne slå opp køer via JNDI -->
-	<bean id="jmsDestinationResolver" class="org.springframework.jms.support.destination.JndiDestinationResolver"/>
- 	
-    <bean id="jtaTransactionManager" class="org.springframework.transaction.jta.JtaTransactionManager"/>
     
     <bean id="jmstx" class="org.apache.camel.component.jms.JmsComponent">
     	<property name="configuration" ref="jmsConfig"/>
     </bean>
-    
+
     <bean id="jmsConfig" class="org.apache.camel.component.jms.JmsConfiguration">
-    	<property name="connectionFactory" ref="mqConnectionFactory"/>
-    	<property name="transactionManager" ref="jtaTransactionManager"/>
+    	<property name="connectionFactory" ref="connectionFactory"/>
+    	<!--<property name="transactionManager" ref="platformTransactionManager"/>-->
     	<property name="transacted" value="true"/>
     	<property name="transactionTimeout" value="1800"/>
-    	<property name="destinationResolver">
-    		<bean class="org.springframework.jms.support.destination.JndiDestinationResolver"/>
-    	</property>
     	<property name="concurrentConsumers" value="${no.nav.sdpkanal.mq.concurrentConsumers}"/>
     </bean>
  	
@@ -98,13 +83,13 @@
 	
 	<!-- Signerer dokumentpakke -->
 	<bean id="dokumentpakkeSigner" class="no.nav.kanal.camel.DokumentpakkeSigner">
-		<property name="navKeyAndCert" ref="navKeysAndCert"/>
+		<property name="navKeyAndCert" ref="navKeysAndCertificates"/>
 		<property name="legalArchive" ref="legalArchiveMelding"/>
 	</bean>
 	
 	<!-- Signerer SBD -->
 	<bean id="sbdSigner" class="no.nav.kanal.camel.SBDSigner">
-		<property name="navKeyAndCert" ref="navKeysAndCert"/>
+		<property name="navKeyAndCert" ref="navKeysAndCertificates"/>
 		<property name="legalArchive" ref="legalArchiveMelding"/>
 	</bean>
 	
@@ -169,38 +154,20 @@
 		<property name="timeout" value="20"/>
 	</bean>
 	
-	<!-- Setter orginalmelding som In og legger til property -->
-	<bean id="boqReason" class="no.nav.kanal.camel.BOQReason"/>
-
-	<!-- Selftest bean -->
-	<bean id="selftest" scope="prototype" class="no.nav.kanal.selftest.SelfTest"/>
-	
-	<camelContext id="sdpkanal" xmlns="http://camel.apache.org/schema/spring">
+	<camelContext id="sdpkanal" xmlns="http://camel.apache.org/schema/spring" allowUseOriginalMessage="true">
 		<propertyPlaceholder id="properties" location="sdpkanal.properties" />
 		<jmxAgent id="jmxAgent" mbeanObjectDomainName="org.apache.camel" usePlatformMBeanServer="true" />
 
-		<!-- ENDPOINTS  -->
-		<endpoint id="MQSourceSDPPrioritet" uri="jmstx:queue:jms/queue/SDP_SEND_PRIORITERT" />
-		<endpoint id="MQDestSDPPrioritetBackout" uri="jms:queue:jms/queue/SDP_SEND_PRIORITERT_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
-		
-		<endpoint id="MQSourceSDPStandard" uri="jmstx:queue:jms/queue/SDP_SEND_STANDARD" />
-		<endpoint id="MQDestSDPStandardBackout" uri="jms:queue:jms/queue/SDP_SEND_STANDARD_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
-		
-		<endpoint id="MQDestKvitteringPrioritet" uri="jms:queue:jms/queue/SDP_KVITTERING_PRIORITERT?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
-		<endpoint id="MQDestKvitteringPrioritetBackout" uri="jms:queue:jms/queue/SDP_KVITTERING_PRIORITERT_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
-		
-		<endpoint id="MQDestKvitteringStandard" uri="jms:queue:jms/queue/SDP_KVITTERING_STANDARD?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
-		<endpoint id="MQDestKvitteringStandardBackout" uri="jms:queue:jms/queue/SDP_KVITTERING_STANDARD_BOQ?connectionFactory=mqConnectionFactory&amp;destinationResolver=#jmsDestinationResolver" />
-		
+
 		<endpoint id="ebmsPullNormal" uri="timer:ebmspullnormal?period=${ebms.pullinterval.normal}"/>
 		<endpoint id="ebmsPullPrioritert" uri="timer:ebmspullprioritert?period=${ebms.pullinterval.prioritert}"/>
-		
+
 		<dataFormats>
 			<jaxb id="sdpkanaljaxb" prettyPrint="true" contextPath="no.difi.begrep.sdp.schema_v10:no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.meldinger:no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1:org.unece.cefact.namespaces.standardbusinessdocumentheader:org.w3._2000._09.xmldsig_"/>
 		</dataFormats>
-		
+
         <redeliveryPolicyProfile id="rpp" maximumRedeliveries="0" retryAttemptedLogLevel="WARN" redeliveryDelay="5000"  />
-        
+
 		<!-- Rute for å få lagt prioriterte meldinger på BOQ -->
 		<route id="dlqMeldingPrioritert">
 			<from uri="direct:dlqMeldingPrioritert"/>
@@ -208,8 +175,8 @@
 			<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
 			<bean ref="boqLoggerMelding" id="boqLoggerMeldingPrioritert"/>
 			<bean ref="deleteTempDir" id="deleteTempDirPrioritertBOQ"/>
-			<bean ref="boqReason"/>
-			<to uri="ref:MQDestSDPPrioritetBackout"/>
+			<bean ref="backoutReason"/>
+			<to uri="ref:inputPriorityBackoutQueue"/>
 		</route>
 		
 		<!-- Rute for å få lagt standard meldinger på BOQ -->
@@ -219,13 +186,13 @@
 			<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
 			<bean ref="boqLoggerMelding" id="boqLoggerMeldingStandard"/>
 			<bean ref="deleteTempDir" id="deleteTempDirStandardBOQ"/>
-			<bean ref="boqReason"/>
-			<to uri="ref:MQDestSDPStandardBackout"/>
+			<bean ref="backoutReason"/>
+			<to uri="ref:inputBackoutQueue"/>
 		</route>
 		
 		<!-- Rute for å sende prioritert DigitalPost -->
 		<route id="sendDigitalPostPrioritert">
-			 <from uri="ref:MQSourceSDPPrioritet"/>
+			 <from uri="ref:inputQueuePriority"/>
 			 <onException>
 			 	<exception>java.lang.Exception</exception>
 			 	<handled>
@@ -246,7 +213,7 @@
 		
 		<!-- Rute for å sende standard digital- eller fysisk post -->
 		<route id="sendDigitalPostStandard">
-			 <from uri="ref:MQSourceSDPStandard"/>
+			 <from uri="ref:inputQueue"/>
 			 <onException>
 			 	<exception>java.lang.Exception</exception>
 			 	<handled>
@@ -295,7 +262,7 @@
 					<header>LOOP_INDICATOR_NORMAL</header>
 					<doTry>
 			 			<bean ref="kvitteringValidator" id="kvitteringValidatorNormal"/>
-						<to uri="MQDestKvitteringStandard"/>
+						<to uri="receiptQueue"/>
 						<bean ref="kvitteringLogger" id="kvitteringLoggerNormal"/>
 						<setHeader headerName="antall_meldinger" id="inc_antall_meldinger_normal">
 							<simple>${in.header.antall_meldinger}++</simple>
@@ -306,7 +273,7 @@
 							<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
 							<log message="Verification of message received in pull FAILED" loggingLevel="ERROR" logName="no.nav.kanal"/>
 							<bean ref="boqLoggerKvittering" id="boqLoggerKvitteringNormal"/>
-							<to uri="MQDestKvitteringStandardBackout"/>
+							<to uri="receiptBackoutQueue"/>
 						</doCatch>
 					</doTry>
 				</when>
@@ -347,7 +314,7 @@
 					<header>LOOP_INDICATOR_PRIORITERT</header>
 					<doTry>
 			 			<bean ref="kvitteringValidator" id="kvitteringValidatorPrioritert"/>
-						<to uri="MQDestKvitteringPrioritet"/>
+						<to uri="receiptPriorityQueue"/>
 						<bean ref="kvitteringLogger" id="kvitteringLoggerPrioritert"/>
 						<setHeader headerName="antall_meldinger" id="inc_antall_meldinger_prioritert">
 							<simple>${in.header.antall_meldinger}++</simple>
@@ -358,7 +325,7 @@
 							<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
 							<log message="Verification of message received in pull FAILED" loggingLevel="ERROR" logName="no.nav.kanal"/>
 							<bean ref="boqLoggerKvittering" id="boqLoggerKvitteringPrioritert"/>
-							<to uri="MQDestKvitteringPrioritetBackout"/>
+							<to uri="receiptPriorityBackoutQueue"/>
 						</doCatch>
 					</doTry>
 				</when>

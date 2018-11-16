@@ -124,7 +124,7 @@ public class FlameEbmsPush implements Processor {
         	client = flamefactory.getClientFactory().createClient(ebmsTo, ebmsFrom, flamefactory.getPushModeDigital(), KanalConstants.EBMS_PMODE_EVENTID_DIGITAL_PUSH, null);
         }
         
-		client.setSecurityContext(FlameEbms.readSecurityContext("/flame/sc.push-wts.xml"));
+		client.setSecurityContext("sc.push-wts.xml");
 		
 		// sets password for key used when signing messages
 		client.setSignAliasPW(flamefactory.getKeyPassword());
@@ -146,7 +146,8 @@ public class FlameEbmsPush implements Processor {
 
 		StreamSource payload = new StreamSource(new File((String) exchangeIn.getIn().getHeader(KanalConstants.CAMEL_HEADER_STANDARD_BUSINESS_DOCUMENT)));
 		client.setPayload(payload);
-		
+
+		Thread.sleep(10000);
 		return client.transmit(null, flamefactory.getEbmsEndpoint());
 	}
 	

@@ -48,7 +48,7 @@ public class FlameEbmsPull implements Processor {
         exchangeIn.getIn().setBody(null);
         
 		Client client = flamefactory.getClientFactory().createClient(null, null, flamefactory.getPullMode(), KanalConstants.EBMS_PMODE_EVENTID_PULL, null);
-		client.setSecurityContext(FlameEbms.readSecurityContext("/flame/sc.pull.xml"));
+		client.setSecurityContext("sc.pull.xml");
 
 		// sets password for key used when signing messages
 		client.setSignAliasPW(flamefactory.getKeyPassword());

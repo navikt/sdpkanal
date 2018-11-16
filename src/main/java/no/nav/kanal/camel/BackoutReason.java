@@ -7,10 +7,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import no.nav.kanal.KanalConstants;
+import org.springframework.stereotype.Service;
 
-public class BOQReason implements Processor  {
+@Service
+public class BackoutReason implements Processor  {
 	
-	private static Logger log = LoggerFactory.getLogger(BOQReason.class);
+	private static Logger log = LoggerFactory.getLogger(BackoutReason.class);
 	
 	@Override
 	public void process(Exchange exchange) throws Exception {
