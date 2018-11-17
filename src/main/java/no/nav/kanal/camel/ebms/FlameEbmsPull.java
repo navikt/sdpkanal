@@ -3,14 +3,12 @@ package no.nav.kanal.camel.ebms;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.UUID;
 
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
 
 import no.nav.kanal.KanalConstants;
 import no.nav.kanal.log.LegalArchiveLogger;
-import no.nav.kanal.log.LogEvent;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -21,14 +19,10 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.w3c.dom.NodeList;
 
-import com.flame.client.as4.api.Client;
-import com.flame.client.as4.api.ClientFactory.ClientException;
-
 public class FlameEbmsPull implements Processor {
 
 	protected static final Logger log = LoggerFactory.getLogger(FlameEbmsPull.class);
 
-	private FlameEbms flamefactory;
 	private LegalArchiveLogger legalArchive = null;
 	private String mpcNormal;
 	private String mpcPrioritert;
@@ -47,7 +41,7 @@ public class FlameEbmsPull implements Processor {
         // reset body. We do not want to see earlier messages in the body but we must allow headers as they are used in the logic 
         exchangeIn.getIn().setBody(null);
         
-		Client client = flamefactory.getClientFactory().createClient(null, null, flamefactory.getPullMode(), KanalConstants.EBMS_PMODE_EVENTID_PULL, null);
+		/*Client client = flamefactory.getClientFactory().createClient(null, null, flamefactory.getPullMode(), KanalConstants.EBMS_PMODE_EVENTID_PULL, null);
 		client.setSecurityContext("sc.pull.xml");
 
 		// sets password for key used when signing messages
@@ -109,6 +103,7 @@ public class FlameEbmsPull implements Processor {
 				log.error("Unhandled reply when pulling. Exiting pull-loop.");
 			}
 		}
+		*/
 
     }
 
@@ -155,14 +150,6 @@ public class FlameEbmsPull implements Processor {
 		}
 		
 		return instanceIdentifier;
-	}
-	
-	public FlameEbms getFlamefactory() {
-		return flamefactory;
-	}
-
-	public void setFlamefactory(FlameEbms flamefactory) {
-		this.flamefactory = flamefactory;
 	}
 
 	public void setLegalArchive(LegalArchiveLogger legalArchive) {

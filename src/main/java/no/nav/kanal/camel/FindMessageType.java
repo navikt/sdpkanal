@@ -1,11 +1,9 @@
 package no.nav.kanal.camel;
 
-import no.difi.begrep.sdp.schema_v10.DigitalPost;
+import no.difi.begrep.sdp.schema_v10.SDPDigitalPost;
 import no.nav.kanal.KanalConstants;
 import no.nav.kanal.log.LegalArchiveLogger;
 import no.nav.kanal.log.LogEvent;
-import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.SendDigitalPost;
-import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.meldinger.SendDigitalPostRequest;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -15,14 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument;
 
-import javax.xml.bind.JAXBElement;
-import javax.xml.namespace.QName;
-
 public class FindMessageType implements Processor {
-	
-	private static final String STANDARD_BUSINESS_DOCUMENT_NAMESPACE = "http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader";
-	private static final String STANDARD_BUSINESS_DOCUMENT_LOCAL_NAME = "StandardBusinessDocument";
-	
 	private static Logger log = LoggerFactory.getLogger(FindMessageType.class);
 	private LegalArchiveLogger legalArchive = null;
 
@@ -30,19 +21,13 @@ public class FindMessageType implements Processor {
 	public void process(Exchange exchangeIn) throws Exception {
 		log.debug("FindMessageType is processing");
 
-        SendDigitalPost melding = (SendDigitalPost) exchangeIn.getIn().getBody();
-        SendDigitalPostRequest requestMessage = melding.getSendDigitalPostRequest();
-        
-        String messageID = extractMessageInstanceIdentifier(requestMessage);
+		StandardBusinessDocument standardBusinessDocument = (StandardBusinessDocument) exchangeIn.getIn().getHeader(XmlExtractor.STANDARD_BUSINESS_DOCUMENT);
+        String messageID = extractMessageInstanceIdentifier(standardBusinessDocument);
         MDC.put("callId", messageID);
         
         log.debug("Attempting to parse the request message to find message type/action");
-        
-        StandardBusinessDocument standardBusinessDocument = melding.getSendDigitalPostRequest().getStandardBusinessDocument(); 
-		
-		JAXBElement<StandardBusinessDocument> sbdJaxb = new JAXBElement<StandardBusinessDocument>(new QName(STANDARD_BUSINESS_DOCUMENT_NAMESPACE, STANDARD_BUSINESS_DOCUMENT_LOCAL_NAME), StandardBusinessDocument.class, standardBusinessDocument);	
-        JAXBElement<?> sdbAny = (JAXBElement<?>) sbdJaxb.getValue().getAny();
-        DigitalPost digitalpost = (DigitalPost)sdbAny.getValue();
+
+		SDPDigitalPost digitalpost = (SDPDigitalPost)standardBusinessDocument.getAny();
       
         if (digitalpost.getFysiskPostInfo() != null) {
         	//Melding er fysisk post. Setter denne informasjonen i headeren og logger.
@@ -58,8 +43,8 @@ public class FindMessageType implements Processor {
 		
 	}
 	
-    private String extractMessageInstanceIdentifier(SendDigitalPostRequest requestMessage){
-    	String messageID = requestMessage.getStandardBusinessDocument().getStandardBusinessDocumentHeader().getBusinessScope().getScope().get(0).getInstanceIdentifier();
+    private String extractMessageInstanceIdentifier(StandardBusinessDocument standardBusinessDocument){
+    	String messageID = standardBusinessDocument.getStandardBusinessDocumentHeader().getBusinessScope().getScopes().get(0).getInstanceIdentifier();
     	if(messageID == null || messageID.equals("")){
     		log.error("Message must have a populated InstanceIdentifier");
     		throw new RuntimeCamelException("Message must have a populated InstanceIdentifier");

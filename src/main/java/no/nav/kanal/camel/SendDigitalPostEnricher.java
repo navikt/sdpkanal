@@ -14,13 +14,11 @@ import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.namespace.QName;
 
-import no.difi.begrep.sdp.schema_v10.Dokument;
-import no.difi.begrep.sdp.schema_v10.Manifest;
+import no.difi.begrep.sdp.schema_v10.SDPDokument;
+import no.difi.begrep.sdp.schema_v10.SDPManifest;
 import no.nav.kanal.KanalConstants;
 import no.nav.kanal.log.LegalArchiveLogger;
 import no.nav.kanal.log.LogEvent;
-import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.SendDigitalPost;
-import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.meldinger.SendDigitalPostRequest;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -42,15 +40,14 @@ public class SendDigitalPostEnricher implements Processor {
     public void process(Exchange exchangeIn) throws Exception {
         log.debug("SendDigitalPostEnricher is processing");
 
-        SendDigitalPost melding = (SendDigitalPost) exchangeIn.getIn().getBody();
-        SendDigitalPostRequest requestMessage = melding.getSendDigitalPostRequest();
+        SDPManifest manifest = (SDPManifest) exchangeIn.getIn().getHeader(XmlExtractor.MANIFEST_HEADER);
         
         String tempDirectoryPath = createTempDirectory(exchangeIn.getContext().getUuidGenerator().generateUuid());
         log.debug("Setting temporary folder for this exchange to '" + tempDirectoryPath + "'");
         exchangeIn.getIn().setHeader(KanalConstants.CAMEL_HEADER_TEMP_DIRECTORY, tempDirectoryPath);
 
-        hentEksterneDokumenter(requestMessage.getManifest(), tempDirectoryPath);
-        skrivManifestTilFil(requestMessage.getManifest(), tempDirectoryPath);
+        hentEksterneDokumenter(manifest, tempDirectoryPath);
+        skrivManifestTilFil(manifest, tempDirectoryPath);
        
         legalArchive.logEvent(exchangeIn, LogEvent.MELDING_POPULERT_MED_DOKUMENTER);    	
         
@@ -65,16 +62,16 @@ public class SendDigitalPostEnricher implements Processor {
         return tempDirectory.getAbsolutePath() + "/";
     }
 
-    private void hentEksterneDokumenter(Manifest manifest, String tempDirectoryPath) {
+    private void hentEksterneDokumenter(SDPManifest manifest, String tempDirectoryPath) {
 
         hentDokumentFil(manifest.getHoveddokument(), tempDirectoryPath);
-        List<Dokument> vedleggListe = manifest.getVedlegg();
-        for (Iterator<Dokument> iterator = vedleggListe.iterator(); iterator.hasNext();) {
+        List<SDPDokument> vedleggListe = manifest.getVedleggs();
+        for (Iterator<SDPDokument> iterator = vedleggListe.iterator(); iterator.hasNext();) {
             hentDokumentFil(iterator.next(), tempDirectoryPath);
         }
     }
 
-    private void hentDokumentFil(Dokument dokument, String tempDirectoryPath) {
+    private void hentDokumentFil(SDPDokument dokument, String tempDirectoryPath) {
 
         File sourceFile = new File(remoteDokumentsPathPrefix + "/" + dokument.getHref());
         String dokumentFilnavn = extractFilenameFromHref(dokument.getHref());
@@ -110,11 +107,11 @@ public class SendDigitalPostEnricher implements Processor {
         return splittedHref[splittedHref.length - 1];
     }
 
-    private void skrivManifestTilFil(Manifest manifest, String tempDirectoryPath) {
+    private void skrivManifestTilFil(SDPManifest manifest, String tempDirectoryPath) {
 
         try {
-            Marshaller marshaller = JAXBContext.newInstance(Manifest.class).createMarshaller();
-            JAXBElement<Manifest> jaxbManifestElement = new JAXBElement<Manifest>(new QName("http://begrep.difi.no/sdp/schema_v10","manifest"), Manifest.class, manifest);
+            Marshaller marshaller = JAXBContext.newInstance(SDPManifest.class).createMarshaller();
+            JAXBElement<SDPManifest> jaxbManifestElement = new JAXBElement<SDPManifest>(new QName("http://begrep.difi.no/sdp/schema_v10","manifest"), SDPManifest.class, manifest);
             marshaller.marshal(jaxbManifestElement, new File(tempDirectoryPath + "/" + KanalConstants.DOKUMENTPAKKE_MANIFEST_FILE_NAME));
         } catch (JAXBException e) {
             throw new RuntimeCamelException("Could not export manifest to file", e);

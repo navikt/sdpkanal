@@ -81,30 +81,16 @@
 		<property name="legalArchive" ref="legalArchiveMelding"/>
 	</bean>
 	
-	<!-- Signerer dokumentpakke -->
-	<bean id="dokumentpakkeSigner" class="no.nav.kanal.camel.DokumentpakkeSigner">
-		<property name="navKeyAndCert" ref="navKeysAndCertificates"/>
-		<property name="legalArchive" ref="legalArchiveMelding"/>
-	</bean>
-	
-	<!-- Signerer SBD -->
-	<bean id="sbdSigner" class="no.nav.kanal.camel.SBDSigner">
-		<property name="navKeyAndCert" ref="navKeysAndCertificates"/>
-		<property name="legalArchive" ref="legalArchiveMelding"/>
-	</bean>
-	
 	
 	<!-- Komponent for EBMS pull -->
 	<bean id="flameEbmsPull" class="no.nav.kanal.camel.ebms.FlameEbmsPull">
-		<property name="flamefactory" ref="flameEbms"/>
 		<property name="legalArchive" ref="legalArchiveKvittering"/>
 		<property name="mpcNormal" value="${ebms.mpc.normal}"/>
 		<property name="mpcPrioritert" value="${ebms.mpc.prioritert}"/>
 	</bean>
-	
+
 	<!-- Komponent for EBMS push -->
 	<bean id="flameEbmsPush" class="no.nav.kanal.camel.ebms.FlameEbmsPush">
-		<property name="flamefactory" ref="flameEbms"/>
 		<property name="partProperties">
 			<map>
 				<entry key="mimetype" value="application/cms"/>
@@ -119,6 +105,7 @@
 		<property name="legalArchive" ref="legalArchiveMelding"/>
 		<property name="maxRetries" value="${ebms.push.maxRetries}"/>
 		<property name="retryIntervalInSeconds" value="${ebms.push.retryIntervalInSeconds}"/>
+		<property name="digipostEbms" ref="digipostEbms" />
 	</bean>
 
 	
@@ -140,7 +127,6 @@
 	<!-- Validerer signatur i kvitteringsmeldinger -->
 	<bean id="kvitteringValidator" class="no.nav.kanal.camel.KvitteringValidator">
 		<property name="legalArchive" ref="legalArchiveKvittering"/>
-		<property name="signatureValidator" ref="signatureValidator"/>
 	</bean>
 	
 	<!-- Sletter temp mappe ved feil og avslutning av meldingsrute -->
@@ -200,12 +186,10 @@
 				</handled>
 			 	<to uri="direct:dlqMeldingPrioritert"/>
 			 </onException>
-			 <unmarshal ref="sdpkanaljaxb" id="XMLToJAXBPrioritert"/>
+			<bean ref="xmlExtractor" />
 			 <bean ref="findMessageType" id="findMessageTypePrioritert"/>
 			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherPrioritert"/>
-			 <bean ref="dokumentpakkeSigner" id="dokumentpakkeSignerPrioritert"/>
-			 <bean ref="dokumentpakkeEncrypter" id="dokumentpakkeEncrypterPrioritert"/>
-			 <bean ref="sbdSigner" id="sbdSignerPrioritert"/>
+
 <!-- 			 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
 			 <bean ref="flameEbmsPush" id="flameEbmsPushPrioritert"/>
 			 <bean ref="deleteTempDir" id="deleteTempDirPrioritert"/>
@@ -221,12 +205,10 @@
 				</handled>
 			 	<to uri="direct:dlqMeldingStandard"/>
 			 </onException>
-			 <unmarshal ref="sdpkanaljaxb" id="XMLToJAXB"/>
+			<bean ref="xmlExtractor" />
 			 <bean ref="findMessageType" id="findMessageTypeStandard"/>
 			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherStandard"/>
-			 <bean ref="dokumentpakkeSigner" id="dokumentpakkeSignerStandard"/>
-			 <bean ref="dokumentpakkeEncrypter" id="dokumentpakkeEncrypterStandard"/>
-			 <bean ref="sbdSigner" id="sbdSignerStandard"/>
+			<bean ref="asicECreator" />
 <!-- 		 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
 			 <bean ref="flameEbmsPush" id="flameEbmsPushStandard"/>
 			 <bean ref="deleteTempDir" id="deleteTempDirStandard"/>
@@ -281,7 +263,7 @@
 					<log loggingLevel="INFO" message="End of pullrequest cycle for normal. No message sent to queue." />
 				</otherwise>
 			</choice>
-			<log loggingLevel="INFO" message="Single pull done for normal" />
+			<log loggingLevel="DEBUG" message="Single pull done for normal" />
 		</route>
 		
 		<!-- Rute for pulling av kvitteringer fra prioritert MPC -->
@@ -333,7 +315,7 @@
 					<log loggingLevel="INFO" message="End of pullrequest cycle for prioritert. No message sent to queue." />
 				</otherwise>
 			</choice>
-			<log loggingLevel="INFO" message="Single pull done for prioritert" />
+			<log loggingLevel="DEBUG" message="Single pull done for prioritert" />
 		</route>
 	
 	</camelContext>

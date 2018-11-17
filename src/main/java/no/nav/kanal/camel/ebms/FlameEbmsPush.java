@@ -2,23 +2,24 @@ package no.nav.kanal.camel.ebms;
 
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.Map;
 
-import javax.activation.URLDataSource;
 import javax.xml.soap.SOAPException;
 import javax.xml.soap.SOAPMessage;
-import javax.xml.transform.stream.StreamSource;
+import javax.xml.ws.soap.SOAPFaultException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import no.digipost.api.MessageSender;
+import no.digipost.api.representations.*;
 import no.nav.kanal.KanalConstants;
+import no.nav.kanal.camel.AsicE;
+import no.nav.kanal.camel.AsicECreator;
+import no.nav.kanal.camel.XmlExtractor;
 import no.nav.kanal.log.LegalArchiveLogger;
 import no.nav.kanal.log.LogEvent;
-import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.SendDigitalPost;
-import no.nav.tjeneste.virksomhet.digitalpost.senddigitalpost.v1.meldinger.SendDigitalPostRequest;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.Processor;
@@ -26,14 +27,13 @@ import org.apache.camel.RuntimeCamelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.flame.client.as4.api.Client;
-import com.flame.client.as4.api.ClientFactory.ClientException;
+import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument;
 
 public class FlameEbmsPush implements Processor {
 
 	protected static final Logger log = LoggerFactory.getLogger(FlameEbmsPush.class);
-	
-	
+
+
 	private String ebmsTo;
 	private String ebmsFrom;
 	private String mpcNormal;
@@ -42,13 +42,13 @@ public class FlameEbmsPush implements Processor {
 	private LegalArchiveLogger legalArchive = null;
 	private int maxRetries = 3;
 	private int retryIntervalInSeconds = 5;
-	private FlameEbms flamefactory;
-	
+	private DigipostEbms digipostEbms;
+
 	@Override
     public void process(Exchange exchangeIn) throws Exception {
         log.info("FlameEbms is pushing");
-        		
-		SOAPMessage reply;
+
+		TransportKvittering reply;
 		int retryCounter= 0;
 		while(true) {
 			try {
@@ -56,21 +56,22 @@ public class FlameEbmsPush implements Processor {
 					log.info("Push retry number " + retryCounter);
 				}
 				reply = createAndSendMessage(exchangeIn);
+				break;
 				// check if we should retry based on EBMS response
-				if(FlameEbmsUtil.isEbmsSignalMessage(reply) && 
-						FlameEbmsUtil.hasEbmsError(reply) && 
-						FlameEbmsUtil.getEbmsErrorCode(reply).equalsIgnoreCase(FlameEbmsUtil.EBMS_ERROR_0004)) {
-					if(++retryCounter == maxRetries) {
-						log.warn("Maximum retries reached.");
-						throw new RuntimeCamelException("Maximum retries reached and EBMS0004");
-					}
-					log.debug("Waiting " + retryIntervalInSeconds + " before retrying push because of EBMS0004");
-					Thread.sleep(retryIntervalInSeconds*1000);				
-				} else {
-					break;
-				}
-				
-			} catch (ClientException e) {
+				//if(FlameEbmsUtil.isEbmsSignalMessage(reply) &&
+				//		FlameEbmsUtil.hasEbmsError(reply) &&
+				//		FlameEbmsUtil.getEbmsErrorCode(reply).equalsIgnoreCase(FlameEbmsUtil.EBMS_ERROR_0004)) {
+				//	if(++retryCounter == maxRetries) {
+				//		log.warn("Maximum retries reached.");
+				//		throw new RuntimeCamelException("Maximum retries reached and EBMS0004");
+				//	}
+				//	log.debug("Waiting " + retryIntervalInSeconds + " before retrying push because of EBMS0004");
+				//	Thread.sleep(retryIntervalInSeconds*1000);
+				//} else {
+				//	break;
+				//}
+
+			} catch (SOAPFaultException e) {
 				log.error("Error during transmit: " + e.getMessage());
 				legalArchive.logEvent(exchangeIn, LogEvent.MELDING_SENDT_TIL_DIFI_FEILET, ". Retry number " + retryCounter + ". Error: " + e.getCause());
 				// check if we should retry based on connection problems
@@ -80,15 +81,17 @@ public class FlameEbmsPush implements Processor {
 						throw new RuntimeCamelException("Maximum retries reached and ClientException during push: " + e.getMessage(), e);
 					}
 					log.debug("Waiting " + retryIntervalInSeconds + " before retrying push because of connection problems");
-					Thread.sleep(retryIntervalInSeconds*1000);					
+					Thread.sleep(retryIntervalInSeconds*1000);
 				} else {
 					log.warn("Not a temporary problem. No retry performed.");
-					throw new RuntimeCamelException("ClientException during push: " + e.getMessage(), e);					
-				}				
+					throw new RuntimeCamelException("ClientException during push: " + e.getMessage(), e);
+				}
 			}
 		}
-		
-		handleResponse(reply, exchangeIn);
+
+		System.out.println(reply.messageId);
+		System.out.println(new ObjectMapper().writeValueAsString(reply));
+		//handleResponse(reply, exchangeIn);
     }
 
 	/* Handles EBMS reply */
@@ -108,55 +111,30 @@ public class FlameEbmsPush implements Processor {
 		}
 	}
 
-	/* Creates and sends an EBMS message. */
-	private SOAPMessage createAndSendMessage(Exchange exchangeIn) throws Exception {
 
-		SendDigitalPost melding = (SendDigitalPost) exchangeIn.getIn().getBody();
-        SendDigitalPostRequest requestMessage = melding.getSendDigitalPostRequest();
-		
-        Client client; 
-        
-        if (exchangeIn.getIn().getHeader(KanalConstants.CAMEL_HEADER_TYPE).equals(KanalConstants.CAMEL_HEADER_TYPE_FYSISK_POST)) {
-        	//Melding er fysisk post
-        	client = flamefactory.getClientFactory().createClient(ebmsTo, ebmsFrom, flamefactory.getPushModeFysisk(), KanalConstants.EBMS_PMODE_EVENTID_FYSISK_PUSH, null);
-        } else {
-        	//Melding er digital post
-        	client = flamefactory.getClientFactory().createClient(ebmsTo, ebmsFrom, flamefactory.getPushModeDigital(), KanalConstants.EBMS_PMODE_EVENTID_DIGITAL_PUSH, null);
-        }
-        
-		client.setSecurityContext("sc.push-wts.xml");
-		
-		// sets password for key used when signing messages
-		client.setSignAliasPW(flamefactory.getKeyPassword());
-		
-		String conversationId = requestMessage.getStandardBusinessDocument().getStandardBusinessDocumentHeader().getBusinessScope().getScope().get(0).getInstanceIdentifier();
-		client.setConversationID(conversationId);
-		log.info("ConversationID: " + conversationId);
-		String messageId = requestMessage.getStandardBusinessDocument().getStandardBusinessDocumentHeader().getDocumentIdentification().getInstanceIdentifier();
-		client.setMessageID(messageId);
-		log.debug("MessageID: " + messageId);
-				
-		String mpc = (requestMessage.isErPrioritert()) ? mpcPrioritert : mpcNormal;
-		client.setMPC(mpc);
-		log.debug("MPC:" + mpc);
-		
-		String dokpakkefilename = (String) exchangeIn.getIn().getHeader(KanalConstants.CAMEL_HEADER_DOKUMENTPAKKE);
-		client.addAttachment((HashMap<String, String>) partProperties, new URLDataSource(new File(dokpakkefilename).toURI().toURL()));
-		log.debug("Preparing to push dokumentpakke with name " + dokpakkefilename);
+	private TransportKvittering createAndSendMessage(Exchange exchangeIn) throws Exception {
+		StandardBusinessDocument sbd = exchangeIn.getIn().getHeader(XmlExtractor.STANDARD_BUSINESS_DOCUMENT, StandardBusinessDocument.class);
+		Boolean isPrioritized = exchangeIn.getIn().getHeader(XmlExtractor.HAS_PRIORITY, Boolean.class);
 
-		StreamSource payload = new StreamSource(new File((String) exchangeIn.getIn().getHeader(KanalConstants.CAMEL_HEADER_STANDARD_BUSINESS_DOCUMENT)));
-		client.setPayload(payload);
+		AsicE asice = exchangeIn.getIn().getHeader(AsicECreator.ASICE_CONTAINER, AsicE.class);
 
-		Thread.sleep(10000);
-		return client.transmit(null, flamefactory.getEbmsEndpoint());
+		Organisasjonsnummer sbdhMottaker = Organisasjonsnummer.of("984661185");
+		Dokumentpakke documentPackage = new Dokumentpakke(asice.getBytes());
+		String mpc = (isPrioritized) ? mpcPrioritert : mpcNormal;
+
+		MessageSender messageSender = digipostEbms.getMessageSender();
+		return messageSender.send(EbmsForsendelse
+				.create(digipostEbms.getDatabehandler(), digipostEbms.getMottaker(), sbdhMottaker, sbd, documentPackage)
+				.withMpcId(mpc)
+				.build());
 	}
-	
+
 
 	/* Iterates through exception to see this is a connection problem. Breaks to make sure we don't check too deep */
-	private boolean isConnectionProblem(ClientException e) {
+	private boolean isConnectionProblem(Exception e) {
 		int depth=0;
 		Throwable cause = e.getCause();
-		while(cause != null) {			
+		while(cause != null) {
 			if(cause instanceof ConnectException || cause instanceof UnknownHostException){
 				return true;
 			}
@@ -183,14 +161,6 @@ public class FlameEbmsPush implements Processor {
 		this.partProperties = partProperties;
 	}
 
-	public FlameEbms getFlamefactory() {
-		return flamefactory;
-	}
-
-	public void setFlamefactory(FlameEbms flamefactory) {
-		this.flamefactory = flamefactory;
-	}
-
 	public String getEbmsTo() {
 		return ebmsTo;
 	}
@@ -206,7 +176,7 @@ public class FlameEbmsPush implements Processor {
 	public void setEbmsFrom(String ebmsFrom) {
 		this.ebmsFrom = ebmsFrom;
 	}
-	
+
 	public void setLegalArchive(LegalArchiveLogger legalArchive) {
 		this.legalArchive = legalArchive;
 	}
@@ -241,5 +211,13 @@ public class FlameEbmsPush implements Processor {
 
 	public void setMpcPrioritert(String mpcPrioritert) {
 		this.mpcPrioritert = mpcPrioritert;
+	}
+
+	public void setDigipostEbms(DigipostEbms digipostEbms) {
+		this.digipostEbms = digipostEbms;
+	}
+
+	public DigipostEbms getDigipostEbms() {
+		return digipostEbms;
 	}
 }
