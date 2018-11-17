@@ -80,7 +80,6 @@ class XmlExtractor : Processor {
     companion object {
         const val STANDARD_BUSINESS_DOCUMENT = "standardBusinessDocument"
         const val MANIFEST_HEADER = "manifest"
-        const val CERTIFICATE_HEADER = "encryption_certificate"
         const val CERTIFICATE = "sertifikat"
         const val HAS_PRIORITY = "erPrioritert"
     }

@@ -190,6 +190,8 @@
 			 <bean ref="findMessageType" id="findMessageTypePrioritert"/>
 			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherPrioritert"/>
 
+			<bean ref="asicECreator" />
+			<bean ref="asiceEncrypter" />
 <!-- 			 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
 			 <bean ref="flameEbmsPush" id="flameEbmsPushPrioritert"/>
 			 <bean ref="deleteTempDir" id="deleteTempDirPrioritert"/>
@@ -209,6 +211,7 @@
 			 <bean ref="findMessageType" id="findMessageTypeStandard"/>
 			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherStandard"/>
 			<bean ref="asicECreator" />
+			<bean ref="asiceEncrypter" />
 <!-- 		 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
 			 <bean ref="flameEbmsPush" id="flameEbmsPushStandard"/>
 			 <bean ref="deleteTempDir" id="deleteTempDirStandard"/>

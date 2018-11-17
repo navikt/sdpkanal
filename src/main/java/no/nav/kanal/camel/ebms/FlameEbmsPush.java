@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import no.digipost.api.MessageSender;
 import no.digipost.api.representations.*;
 import no.nav.kanal.KanalConstants;
+import no.nav.kanal.camel.ASiCEEncrypter;
 import no.nav.kanal.camel.AsicE;
 import no.nav.kanal.camel.AsicECreator;
 import no.nav.kanal.camel.XmlExtractor;
@@ -112,14 +113,14 @@ public class FlameEbmsPush implements Processor {
 	}
 
 
-	private TransportKvittering createAndSendMessage(Exchange exchangeIn) throws Exception {
+	private TransportKvittering createAndSendMessage(Exchange exchangeIn) {
 		StandardBusinessDocument sbd = exchangeIn.getIn().getHeader(XmlExtractor.STANDARD_BUSINESS_DOCUMENT, StandardBusinessDocument.class);
 		Boolean isPrioritized = exchangeIn.getIn().getHeader(XmlExtractor.HAS_PRIORITY, Boolean.class);
 
-		AsicE asice = exchangeIn.getIn().getHeader(AsicECreator.ASICE_CONTAINER, AsicE.class);
+		byte[] encryptedASiCE = exchangeIn.getIn().getHeader(ASiCEEncrypter.ENCRYPTED_ASICE, byte[].class);
 
 		Organisasjonsnummer sbdhMottaker = Organisasjonsnummer.of("984661185");
-		Dokumentpakke documentPackage = new Dokumentpakke(asice.getBytes());
+		Dokumentpakke documentPackage = new Dokumentpakke(encryptedASiCE);
 		String mpc = (isPrioritized) ? mpcPrioritert : mpcNormal;
 
 		MessageSender messageSender = digipostEbms.getMessageSender();

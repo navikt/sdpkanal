@@ -56,13 +56,13 @@ class AsicECreator @Autowired constructor(
         val bytes = files.map { it.bytes.size.toLong() }.sum()
 
         val archive = createZip.zipIt(files)
-        exchange.getIn().setHeader(ASICE_CONTAINER, AsicE(archive.bytes, bytes))
+        exchange.getIn().setHeader(SIGNED_ASICE, archive.bytes)
     }
 
     private fun SDPDokument.toAttachable() = SDPDokumentAsicEWrapper(this, documentReceiver)
 
     companion object {
-        const val ASICE_CONTAINER = "ASiCE_CONTAINER"
+        const val SIGNED_ASICE = "SIGNED_ASiCE"
     }
 }
 
