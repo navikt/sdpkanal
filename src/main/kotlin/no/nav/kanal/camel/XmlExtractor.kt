@@ -1,24 +1,15 @@
 package no.nav.kanal.camel
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import no.difi.begrep.sdp.schema_v10.SDPAvsender
 import no.difi.begrep.sdp.schema_v10.SDPDigitalPost
-import no.difi.begrep.sdp.schema_v10.SDPDokument
-import no.difi.begrep.sdp.schema_v10.SDPLenke
 import no.difi.begrep.sdp.schema_v10.SDPManifest
-import no.difi.begrep.sdp.schema_v10.SDPMottaker
-import no.difi.begrep.sdp.schema_v10.SDPPerson
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument
-import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocumentHeader
 import java.io.StringReader
 import java.util.Base64
 import javax.xml.bind.JAXBContext
-import javax.xml.bind.JAXBElement
-import javax.xml.namespace.QName
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamReader
 
@@ -62,7 +53,9 @@ class XmlExtractor : Processor {
                         while (xmlReader.next() != XMLStreamReader.END_ELEMENT) {
                             b64.append(xmlReader.text)
                         }
-                        exchange.getIn().setHeader(CERTIFICATE, base64Decoder.decode(base64Decoder.decode(b64.toString())))
+                        val b64Cert = base64Decoder.decode(b64.toString())
+                        val cert = base64Decoder.decode(b64Cert)
+                        exchange.getIn().setHeader(CERTIFICATE, cert)
                         log.info("Found certificate {}", b64)
                         certificateFound = true
                     }

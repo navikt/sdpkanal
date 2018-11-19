@@ -98,8 +98,6 @@
 				<entry key="Content" value="sdp:Dokumentpakke"/>
 			</map>
 		</property>
-		<property name="ebmsFrom" value="${ebms.from}"/>
-		<property name="ebmsTo" value="${ebms.to}"/>
 		<property name="mpcNormal" value="${ebms.mpc.normal}"/>
 		<property name="mpcPrioritert" value="${ebms.mpc.prioritert}"/>
 		<property name="legalArchive" ref="legalArchiveMelding"/>
@@ -178,47 +176,40 @@
 		
 		<!-- Rute for å sende prioritert DigitalPost -->
 		<route id="sendDigitalPostPrioritert">
-			 <from uri="ref:inputQueuePriority"/>
-			 <onException>
-			 	<exception>java.lang.Exception</exception>
-			 	<handled>
+			<from uri="ref:inputQueuePriority"/>
+			<onException>
+				<exception>java.lang.Exception</exception>
+				<handled>
 					<constant>true</constant>
 				</handled>
-			 	<to uri="direct:dlqMeldingPrioritert"/>
-			 </onException>
+				<to uri="direct:dlqMeldingPrioritert"/>
+			</onException>
 			<bean ref="xmlExtractor" />
-			 <bean ref="findMessageType" id="findMessageTypePrioritert"/>
-			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherPrioritert"/>
-
-			<bean ref="asicECreator" />
-			<bean ref="asiceEncrypter" />
-<!-- 			 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
-			 <bean ref="flameEbmsPush" id="flameEbmsPushPrioritert"/>
-			 <bean ref="deleteTempDir" id="deleteTempDirPrioritert"/>
+			<bean ref="findMessageType" id="findMessageTypePrioritert"/>
+			<bean ref="documentPackageCreator" />
+			<!-- 			 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
+			<bean ref="flameEbmsPush" id="flameEbmsPushPrioritert"/>
 		</route>
-		
+
 		<!-- Rute for å sende standard digital- eller fysisk post -->
 		<route id="sendDigitalPostStandard">
-			 <from uri="ref:inputQueue"/>
-			 <onException>
-			 	<exception>java.lang.Exception</exception>
-			 	<handled>
+			<from uri="ref:inputQueue"/>
+			<onException>
+				<exception>java.lang.Exception</exception>
+				<handled>
 					<constant>true</constant>
 				</handled>
-			 	<to uri="direct:dlqMeldingStandard"/>
-			 </onException>
+				<to uri="direct:dlqMeldingStandard"/>
+			</onException>
 			<bean ref="xmlExtractor" />
-			 <bean ref="findMessageType" id="findMessageTypeStandard"/>
-			 <bean ref="sendDigitalPostEnricher" id="sendDigitalPostEnricherStandard"/>
-			<bean ref="asicECreator" />
-			<bean ref="asiceEncrypter" />
-<!-- 		 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
-			 <bean ref="flameEbmsPush" id="flameEbmsPushStandard"/>
-			 <bean ref="deleteTempDir" id="deleteTempDirStandard"/>
+			<bean ref="findMessageType" id="findMessageTypeStandard"/>
+			<bean ref="documentPackageCreator" />
+			<!-- 		 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
+			<bean ref="flameEbmsPush" id="flameEbmsPushStandard"/>
 		</route>
 		
 		<!-- Rute for pulling av kvitteringer fra standard MPC. Startes med timer. -->
-		<route id="ebmsPullNormal_loop" messageHistory="false" autoStartup="true">
+		<route id="ebmsPullNormal_loop" messageHistory="false" autoStartup="false">
 			<from uri="ref:ebmsPullNormal"/>
 			<setHeader headerName="LOOP_INDICATOR_NORMAL" id="LOOP_INDICATOR_NORMAL">
 				<constant>direct:normal_pull</constant>
@@ -270,7 +261,7 @@
 		</route>
 		
 		<!-- Rute for pulling av kvitteringer fra prioritert MPC -->
-		<route id="ebmsPullPrioritert_loop" messageHistory="false" autoStartup="true">
+		<route id="ebmsPullPrioritert_loop" messageHistory="false" autoStartup="false">
 			<from uri="ref:ebmsPullPrioritert"/>
 			<setHeader headerName="LOOP_INDICATOR_PRIORITERT" id="LOOP_INDICATOR_PRIORITERT">
 				<constant>direct:prioritert_pull</constant>

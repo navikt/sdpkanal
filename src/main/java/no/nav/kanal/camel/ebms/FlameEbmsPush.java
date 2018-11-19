@@ -15,9 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import no.digipost.api.MessageSender;
 import no.digipost.api.representations.*;
 import no.nav.kanal.KanalConstants;
-import no.nav.kanal.camel.ASiCEEncrypter;
-import no.nav.kanal.camel.AsicE;
-import no.nav.kanal.camel.AsicECreator;
+import no.nav.kanal.camel.DocumentPackageCreator;
 import no.nav.kanal.camel.XmlExtractor;
 import no.nav.kanal.log.LegalArchiveLogger;
 import no.nav.kanal.log.LogEvent;
@@ -33,10 +31,6 @@ import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusine
 public class FlameEbmsPush implements Processor {
 
 	protected static final Logger log = LoggerFactory.getLogger(FlameEbmsPush.class);
-
-
-	private String ebmsTo;
-	private String ebmsFrom;
 	private String mpcNormal;
 	private String mpcPrioritert;
 	private Map<String, String> partProperties;
@@ -117,10 +111,9 @@ public class FlameEbmsPush implements Processor {
 		StandardBusinessDocument sbd = exchangeIn.getIn().getHeader(XmlExtractor.STANDARD_BUSINESS_DOCUMENT, StandardBusinessDocument.class);
 		Boolean isPrioritized = exchangeIn.getIn().getHeader(XmlExtractor.HAS_PRIORITY, Boolean.class);
 
-		byte[] encryptedASiCE = exchangeIn.getIn().getHeader(ASiCEEncrypter.ENCRYPTED_ASICE, byte[].class);
+		Dokumentpakke documentPackage = exchangeIn.getIn().getHeader(DocumentPackageCreator.DOCUMENT_PACKAGE, Dokumentpakke.class);
 
-		Organisasjonsnummer sbdhMottaker = Organisasjonsnummer.of("984661185");
-		Dokumentpakke documentPackage = new Dokumentpakke(encryptedASiCE);
+		Organisasjonsnummer sbdhMottaker = Organisasjonsnummer.of(sbd.getStandardBusinessDocumentHeader().getReceivers().get(0).getIdentifier().getValue());
 		String mpc = (isPrioritized) ? mpcPrioritert : mpcNormal;
 
 		MessageSender messageSender = digipostEbms.getMessageSender();
@@ -160,22 +153,6 @@ public class FlameEbmsPush implements Processor {
 
 	public void setPartProperties(Map<String, String> partProperties) {
 		this.partProperties = partProperties;
-	}
-
-	public String getEbmsTo() {
-		return ebmsTo;
-	}
-
-	public void setEbmsTo(String ebmsTo) {
-		this.ebmsTo = ebmsTo;
-	}
-
-	public String getEbmsFrom() {
-		return ebmsFrom;
-	}
-
-	public void setEbmsFrom(String ebmsFrom) {
-		this.ebmsFrom = ebmsFrom;
 	}
 
 	public void setLegalArchive(LegalArchiveLogger legalArchive) {
