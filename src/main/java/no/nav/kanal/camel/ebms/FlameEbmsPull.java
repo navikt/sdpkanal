@@ -26,6 +26,7 @@ public class FlameEbmsPull implements Processor {
 	private LegalArchiveLogger legalArchive = null;
 	private String mpcNormal;
 	private String mpcPrioritert;
+	private DigipostEbms digipostEbms;
 
 	private static final String NS_SBDH = "http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader";
 	private static final String ELEMENT_INSTANCE_IDENTIFIER = "InstanceIdentifier";
@@ -40,15 +41,8 @@ public class FlameEbmsPull implements Processor {
         
         // reset body. We do not want to see earlier messages in the body but we must allow headers as they are used in the logic 
         exchangeIn.getIn().setBody(null);
-        
-		/*Client client = flamefactory.getClientFactory().createClient(null, null, flamefactory.getPullMode(), KanalConstants.EBMS_PMODE_EVENTID_PULL, null);
-		client.setSecurityContext("sc.pull.xml");
 
-		// sets password for key used when signing messages
-		client.setSignAliasPW(flamefactory.getKeyPassword());
-		
-		client.setConversationID(UUID.randomUUID().toString());
-		client.setMessageID(UUID.randomUUID().toString());
+		/*
 				
 		// set MPC to pull
 		String mpc = (String) exchangeIn.getIn().getHeader(KanalConstants.CAMEL_HEADER_MPC);
@@ -80,7 +74,7 @@ public class FlameEbmsPull implements Processor {
 		if(reply!=null) {
 			String replyString = soapMessageToString(reply);
 			log.debug("Reply: \n" + replyString);
-			if(FlameEbmsUtil.isEbmsUserMessage(reply)) {
+			if(FlameEbmsUtil.¡(reply)) {
 				// business message. Just pass on
 				String instanceId = getInstanceIdentifier(reply);
 				MDC.put("callId", instanceId);
@@ -134,23 +128,6 @@ public class FlameEbmsPull implements Processor {
 		exchangeIn.getIn().setHeader(KanalConstants.CAMEL_HEADER_MESSAGE_TO_ACK, null);
 		
 	}
-	
-	private String getInstanceIdentifier(SOAPMessage soap) throws SOAPException{
-		NodeList instanceIdentifierList = soap.getSOAPBody().getElementsByTagNameNS(NS_SBDH, ELEMENT_INSTANCE_IDENTIFIER);
-		String instanceIdentifier = null;
-		for (int i = 0; i < instanceIdentifierList.getLength(); i++) {
-			if(instanceIdentifierList.item(i).getParentNode().getLocalName().equals(SCOPE_INSTANCE_IDENTIFIER)){
-				instanceIdentifier = instanceIdentifierList.item(i).getTextContent();
-				log.debug("Setting log identifier to ("  + instanceIdentifier + ")");
-				break;
-			}
-		}
-		if(instanceIdentifier == null){
-			throw new RuntimeCamelException("Could not find instanceIdentifier to use for logging");
-		}
-		
-		return instanceIdentifier;
-	}
 
 	public void setLegalArchive(LegalArchiveLogger legalArchive) {
 		this.legalArchive = legalArchive;
@@ -171,5 +148,12 @@ public class FlameEbmsPull implements Processor {
 	public void setMpcPrioritert(String mpcPrioritert) {
 		this.mpcPrioritert = mpcPrioritert;
 	}
-	
+
+	public DigipostEbms getDigipostEbms() {
+		return digipostEbms;
+	}
+
+	public void setDigipostEbms(DigipostEbms digipostEbms) {
+		this.digipostEbms = digipostEbms;
+	}
 }

@@ -80,14 +80,6 @@
 		<property name="localDokumentsTempPath" value="${no.nav.kanal.dokument.tempPath}"/>
 		<property name="legalArchive" ref="legalArchiveMelding"/>
 	</bean>
-	
-	
-	<!-- Komponent for EBMS pull -->
-	<bean id="flameEbmsPull" class="no.nav.kanal.camel.ebms.FlameEbmsPull">
-		<property name="legalArchive" ref="legalArchiveKvittering"/>
-		<property name="mpcNormal" value="${ebms.mpc.normal}"/>
-		<property name="mpcPrioritert" value="${ebms.mpc.prioritert}"/>
-	</bean>
 
 	<!-- Komponent for EBMS push -->
 	<bean id="flameEbmsPush" class="no.nav.kanal.camel.ebms.FlameEbmsPush">
@@ -232,7 +224,7 @@
 			<setHeader headerName="MPC" id="setHeader MPC normal">
 				<constant>urn:normal</constant>
 			</setHeader>
-			<bean ref="flameEbmsPull" id="flameEbmsPullNormal"/>
+			<bean ref="ebmsPull" id="flameEbmsPullNormal"/>
 			<choice>
 				<when>
 					<header>LOOP_INDICATOR_NORMAL</header>
@@ -279,12 +271,12 @@
 		</route>
 		
 		<!-- Rute for en pull-cycle fra prioritert MPC. -->
-		<route id="ebmsPullPrioritert_single" messageHistory="false">
+		<!--<route id="ebmsPullPrioritert_single" messageHistory="false">
 			<from uri="direct:prioritert_pull"/>
 			<setHeader headerName="MPC">
 				<constant>urn:prioritert</constant>
 			</setHeader>
-			<bean ref="flameEbmsPull" id="flameEbmsPullPrioritert"/>
+			<bean ref="ebmsPull" id="flameEbmsPullPrioritert"/>
 			<choice>
 				<when>
 					<header>LOOP_INDICATOR_PRIORITERT</header>
@@ -310,7 +302,7 @@
 				</otherwise>
 			</choice>
 			<log loggingLevel="DEBUG" message="Single pull done for prioritert" />
-		</route>
+		</route>-->
 	
 	</camelContext>
 
