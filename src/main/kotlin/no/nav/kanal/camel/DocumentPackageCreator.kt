@@ -25,10 +25,9 @@ import java.nio.file.Paths
 import java.util.Base64
 import javax.xml.transform.stream.StreamResult
 
-@Service
 class DocumentPackageCreator @Autowired constructor(
         private val sdpKeys: SdpKeys,
-        @Value("\${no.nav.kanal.dokument.path.prefix}") val documentDirectory: String
+        private val documentDirectory: String
 ) : Processor {
     val log: Logger = LoggerFactory.getLogger(DocumentPackageCreator::class.java)
     private val createCMSDocument = CreateCMSDocument()

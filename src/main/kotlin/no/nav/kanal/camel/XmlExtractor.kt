@@ -5,7 +5,6 @@ import no.difi.begrep.sdp.schema_v10.SDPManifest
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.slf4j.LoggerFactory
-import org.springframework.stereotype.Service
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument
 import java.io.StringReader
 import java.util.Base64
@@ -13,7 +12,6 @@ import javax.xml.bind.JAXBContext
 import javax.xml.stream.XMLInputFactory
 import javax.xml.stream.XMLStreamReader
 
-@Service
 class XmlExtractor : Processor {
     private val log = LoggerFactory.getLogger(XmlExtractor::class.java)
     private val xmlInputFactory = XMLInputFactory.newFactory()

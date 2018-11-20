@@ -2,7 +2,6 @@ package no.nav.kanal.camel.ebms;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
-import java.util.Map;
 
 import javax.xml.ws.soap.SOAPFaultException;
 
@@ -11,6 +10,7 @@ import no.digipost.api.MessageSender;
 import no.digipost.api.representations.*;
 import no.nav.kanal.camel.DocumentPackageCreator;
 import no.nav.kanal.camel.XmlExtractor;
+import no.nav.kanal.config.EbmsKt;
 import no.nav.kanal.log.LegalArchiveLogger;
 import no.nav.kanal.log.LogEvent;
 
@@ -20,37 +20,32 @@ import org.apache.camel.RuntimeCamelException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument;
 
-@Service
 public class EbmsPush implements Processor {
 
 	protected static final Logger log = LoggerFactory.getLogger(EbmsPush.class);
-	private final String mpcNormal;
-	private final String mpcPrioritert;
 	private final LegalArchiveLogger legalArchive;
 	private final long maxRetries;
-	private final long retryIntervalInSeconds;
-	private final DigipostEbms digipostEbms;
+	private final long retryInterval;
+	private final MessageSender messageSender;
+	private final EbmsAktoer datahandler;
+	private final EbmsAktoer receiver;
 
-	@Autowired
 	public EbmsPush(
-			@Value("${ebms.mpc.normal}") String mpcNormal,
-			@Value("${ebms.mpc.prioritert}") String mpcPrioritert,
-			@Value("${ebms.push.maxRetries}") Long maxRetries,
-			@Value("${ebms.push.retryIntervalInSeconds}") Long retryIntervalInSeconds,
+			Long maxRetries,
+			Long retryInterval,
 			LegalArchiveLogger legalArchive,
-			DigipostEbms digipostEbms
+			MessageSender messageSender,
+			EbmsAktoer datahandler,
+			EbmsAktoer receiver
 	) {
-		this.mpcNormal = mpcNormal;
-		this.mpcPrioritert = mpcPrioritert;
 		this.legalArchive = legalArchive;
 		this.maxRetries = maxRetries;
-		this.retryIntervalInSeconds = retryIntervalInSeconds;
-		this.digipostEbms = digipostEbms;
+		this.retryInterval = retryInterval;
+		this.messageSender = messageSender;
+		this.datahandler = datahandler;
+		this.receiver = receiver;
 	}
 
 	@Override
@@ -75,8 +70,8 @@ public class EbmsPush implements Processor {
 						log.warn("Maximum retries reached.");
 						throw new RuntimeCamelException("Maximum retries reached and ClientException during push: " + e.getMessage(), e);
 					}
-					log.debug("Waiting " + retryIntervalInSeconds + " before retrying push because of connection problems");
-					Thread.sleep(retryIntervalInSeconds*1000);
+					log.debug("Waiting " + retryInterval + " before retrying push because of connection problems");
+					Thread.sleep(retryInterval);
 				} else {
 					log.warn("Not a temporary problem. No retry performed.");
 					throw new RuntimeCamelException("ClientException during push: " + e.getMessage(), e);
@@ -92,17 +87,14 @@ public class EbmsPush implements Processor {
 
 	private TransportKvittering createAndSendMessage(Exchange exchangeIn) {
 		StandardBusinessDocument sbd = exchangeIn.getIn().getHeader(XmlExtractor.STANDARD_BUSINESS_DOCUMENT, StandardBusinessDocument.class);
-		Boolean isPrioritized = exchangeIn.getIn().getHeader(XmlExtractor.HAS_PRIORITY, Boolean.class);
 
 		Dokumentpakke documentPackage = exchangeIn.getIn().getHeader(DocumentPackageCreator.DOCUMENT_PACKAGE, Dokumentpakke.class);
 
 		Organisasjonsnummer sbdhMottaker = Organisasjonsnummer.of(sbd.getStandardBusinessDocumentHeader().getReceivers().get(0).getIdentifier().getValue());
-		String mpc = (isPrioritized) ? mpcPrioritert : mpcNormal;
 
-		MessageSender messageSender = digipostEbms.getMessageSender();
 		return messageSender.send(EbmsForsendelse
-				.create(digipostEbms.getDatabehandler(), digipostEbms.getMottaker(), sbdhMottaker, sbd, documentPackage)
-				.withMpcId(mpc)
+				.create(datahandler, receiver, sbdhMottaker, sbd, documentPackage)
+				.withMpcId(exchangeIn.getIn().getHeader(EbmsKt.MPC_ID, String.class))
 				.build());
 	}
 
