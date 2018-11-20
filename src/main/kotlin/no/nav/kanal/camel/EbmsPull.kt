@@ -1,6 +1,5 @@
 package no.nav.kanal.camel
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import no.digipost.api.representations.EbmsPullRequest
 import no.digipost.api.xml.Marshalling
 import no.nav.kanal.camel.ebms.DigipostEbms
@@ -27,8 +26,6 @@ class EbmsPull @Autowired constructor(
             val bytes = ByteArrayOutputStream()
             Marshalling.getMarshallerSingleton().jaxbContext.createMarshaller().marshal(receipt.sbd, bytes)
             exchange.`in`.body = bytes
-
-            log.info(ObjectMapper().writerWithDefaultPrettyPrinter().writeValueAsString(receipt.sbd))
         }
     }
 

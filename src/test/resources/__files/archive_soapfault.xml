@@ -1,9 +1,0 @@
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <soapenv:Fault>
-         <faultcode>soapenv:Server</faultcode>
-         <faultstring>failed to log event: 155 (noe)</faultstring>
-      </soapenv:Fault>
-   </soapenv:Body>
-</soapenv:Envelope>

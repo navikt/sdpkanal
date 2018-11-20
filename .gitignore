@@ -5,5 +5,7 @@ target/
 release.properties
 pom.xml.releaseBackup
 .DS_Store
+*.log.*
+*.log
 
 transaction-logs/

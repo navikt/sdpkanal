@@ -1,8 +1,0 @@
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-   <soapenv:Header/>
-   <soapenv:Body>
-      <ns5:LogAndArchiveResponse xmlns:ns5="http://nav.no/emottak/archiver">
-         <ns5:logId>1609091348urns98634</ns5:logId>
-      </ns5:LogAndArchiveResponse>
-   </soapenv:Body>
-</soapenv:Envelope>

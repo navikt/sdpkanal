@@ -3,6 +3,7 @@ package no.nav.kanal.config;
 import com.ibm.mq.jms.MQConnectionFactory;
 import com.ibm.msg.client.wmq.WMQConstants;
 import no.nav.kanal.config.model.VaultCredentials;
+import org.apache.camel.component.jms.JmsConfiguration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,5 +33,18 @@ public class MqConnectionConfiguration {
         f.setUsername(credentials.getMqUsername());
         f.setPassword(credentials.getMqPassword());
         return f;
+    }
+
+    @Bean
+    public JmsConfiguration jmsConfig(
+            ConnectionFactory connectionFactory,
+            @Value("${no.nav.sdpkanal.mq.concurrentConsumers}") Integer concurrentConsumers
+    ) {
+        JmsConfiguration jmsConfig = new JmsConfiguration();
+        jmsConfig.setConnectionFactory(connectionFactory);
+        jmsConfig.setTransacted(true);
+        jmsConfig.setTransactionTimeout(1800);
+        jmsConfig.setConcurrentConsumers(concurrentConsumers);
+        return jmsConfig;
     }
 }

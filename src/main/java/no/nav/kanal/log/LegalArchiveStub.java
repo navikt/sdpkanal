@@ -1,7 +1,9 @@
 package no.nav.kanal.log;
 
 import org.apache.camel.Exchange;
+import org.springframework.stereotype.Service;
 
+@Service("legalArchive")
 public class LegalArchiveStub implements LegalArchiveLogger {
     @Override
     public void logEvent(Exchange exchangeIn, LogEvent logEvent, String extraInfo, byte[] attachment) {
