@@ -8,16 +8,11 @@ import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
 
 @Service
 class EbmsPull @Autowired constructor(
-        @Value("\${ebms.mpc.normal}")
-        val mpcNormal: String,
-        @Value("\${ebms.mpc.prioritert}")
-        val mpcPrioritert: String,
         val digipostEbms: DigipostEbms
 ) : Processor {
     private val log = LoggerFactory.getLogger(EbmsPull::class.java)
@@ -25,7 +20,7 @@ class EbmsPull @Autowired constructor(
     override fun process(exchange: Exchange) {
         val sender = digipostEbms.messageSender
 
-        val receipt = sender.hentKvittering(EbmsPullRequest(digipostEbms.databehandler, mpcNormal))
+        val receipt = sender.hentKvittering(EbmsPullRequest(digipostEbms.databehandler, exchange.getIn().header<String>(MPC_ID)))
 
         if (receipt != null) {
             sender.bekreft(receipt)
@@ -37,4 +32,7 @@ class EbmsPull @Autowired constructor(
         }
     }
 
+    companion object {
+        const val MPC_ID: String = "MPC_ID"
+    }
 }

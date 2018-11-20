@@ -24,7 +24,7 @@ class XmlExtractor : Processor {
 
     override fun process(exchange: Exchange) {
         log.info("Extracting required metadata")
-        val xmlReader = xmlInputFactory.createXMLStreamReader(StringReader(exchange.getIn().body as String))
+        val xmlReader = xmlInputFactory.createXMLStreamReader(StringReader(exchange.getIn().body()))
 
         var sbdFound = false
         var manifestFound = false
