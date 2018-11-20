@@ -29,4 +29,21 @@ fasitResources:
   used:
   - alias: ebms.msh
     resourceType: BaseUrl
-
+  - alias: mqGateway04
+    resourceType: queuemanager
+  - alias: SDP_SEND_STANDARD
+    resourceType: Queue
+  - alias: SDP_SEND_PRIORITERT
+    resourceType: Queue
+  - alias: SDP_SEND_STANDARD_BOQ
+    resourceType: Queue
+  - alias: SDP_SEND_PRIORITERT_BOQ
+    resourceType: Queue
+  - alias: SDP_KVITTERING_STANDARD
+    resourceType: Queue
+  - alias: SDP_KVITTERING_PRIORITERT
+    resourceType: Queue
+  - alias: SDP_KVITTERING_STANDARD_BOQ
+    resourceType: Queue
+  - alias: SDP_KVITTERING_PRIORITERT_BOQ
+    resourceType: Queue

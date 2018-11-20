@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 open class RouteConfig @Autowired constructor(
         val ebmsPull: EbmsPull,
-        val receiptQueue: JmsEndpoint,
-        val receiptPriorityQueue: JmsEndpoint,
+        val receiptQueueNormal: JmsEndpoint,
+        val receiptQueuePriority: JmsEndpoint,
         @Value("\${ebms.pullinterval.normal}") val receiptPollIntervalNormal: Long,
         @Value("\${ebms.pullinterval.normal}") val receiptPollIntervalPriority: Long,
         @Value("\${ebms.mpc.normal}") val mpcNormal: String,
@@ -21,8 +21,8 @@ open class RouteConfig @Autowired constructor(
 
     @Bean
     open fun pullReceiptsNormal(): ReceiptPollingRoute =
-            ReceiptPollingRoute("pullReceiptsNormal", mpcNormal, ebmsPull, receiptQueue, receiptPollIntervalNormal)
+            ReceiptPollingRoute("pullReceiptsNormal", mpcNormal, ebmsPull, receiptQueueNormal, receiptPollIntervalNormal)
     @Bean
     open fun pullReceiptsPriority(): ReceiptPollingRoute =
-            ReceiptPollingRoute("pullReceiptsPriority", mpcPrioritert, ebmsPull, receiptPriorityQueue, receiptPollIntervalPriority)
+            ReceiptPollingRoute("pullReceiptsPriority", mpcPrioritert, ebmsPull, receiptQueuePriority, receiptPollIntervalPriority)
 }

@@ -2,6 +2,7 @@ package no.nav.kanal.config;
 
 import org.apache.camel.component.jms.JmsConfiguration;
 import org.apache.camel.component.jms.JmsEndpoint;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -14,70 +15,59 @@ import javax.jms.Session;
 public class MqQueueConfiguration {
     private final JmsConfiguration jmsConfiguration;
     private final Session session;
-    public MqQueueConfiguration(JmsConfiguration jmsConfiguration, ConnectionFactory connectionFactory) throws JMSException {
+    private final PlatformTransactionManager transactionManager;
+    public MqQueueConfiguration(
+            JmsConfiguration jmsConfiguration,
+            ConnectionFactory connectionFactory,
+            PlatformTransactionManager platformTransactionManager
+    ) throws JMSException {
         this.jmsConfiguration = jmsConfiguration;
         this.session = connectionFactory.createConnection().createSession(false, Session.AUTO_ACKNOWLEDGE);
+        this.transactionManager = platformTransactionManager;
     }
 
     @Bean
-    public JmsEndpoint inputQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.QUEUE.INPUT"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint inputQueueNormal(@Value("${sdp.send.standard.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint inputQueuePriority(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.QUEUE.INPUT_PRIORITY"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint inputQueuePriority(@Value("${sdp.send.prioritert.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint inputBackoutQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.DEAD.LETTER.QUEUE"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint inputQueueNormalBackout(@Value("${sdp.send.standard.boq.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint inputPriorityBackoutQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.DEAD.LETTER.QUEUE"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint inputQueuePriorityBackout(@Value("${sdp.send.prioritert.boq.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint receiptQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.QUEUE.RECEIPT"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint receiptQueueNormal(@Value("${sdp.kvittering.standard.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint receiptPriorityQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.QUEUE.RECEIPT_PRIORITY"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint receiptQueuePriority(@Value("${sdp.kvittering.prioritert.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint receiptBackoutQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.DEAD.LETTER.QUEUE"));
-        endpoint.setTransactionManager(transactionManager);
-        endpoint.setConfiguration(jmsConfiguration);
-        return endpoint;
+    public JmsEndpoint receiptNormalBackoutQueue(@Value("${sdp.kvittering.standard.boq.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
     }
 
     @Bean
-    public JmsEndpoint receiptPriorityBackoutQueue(PlatformTransactionManager transactionManager) throws JMSException {
-        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue("DEV.DEAD.LETTER.QUEUE"));
+    public JmsEndpoint receiptPriorityBackoutQueue(@Value("${sdp.kvittering.prioritert.boq.queuename}") String queueName) throws JMSException {
+        return createJmsEndpoint(queueName);
+    }
+
+    private JmsEndpoint createJmsEndpoint(String queueName) throws JMSException {
+        JmsEndpoint endpoint = JmsEndpoint.newInstance(session.createQueue(queueName));
         endpoint.setTransactionManager(transactionManager);
         endpoint.setConfiguration(jmsConfiguration);
         return endpoint;

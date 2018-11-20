@@ -31,31 +31,9 @@
 	
 	<!-- LEGAL ARCHIVE for outgoing messages -->
 	<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveStub" />
-	<!--<bean id="legalArchiveMelding" class="no.nav.kanal.log.LegalArchiveLoggerImpl">
-		<property name="logCaller" value="${no.nav.kanal.log.logCaller}"/>
-		<property name="logAction" value="${no.nav.kanal.log.melding.logAction}"/>
-		<property name="logServiceConsumer" value="${no.nav.kanal.log.melding.logServiceConsumer}"/>
-		<property name="logServiceProducer" value="${no.nav.kanal.log.melding.logServiceProducer}"/>
-		<property name="logEndpoint" value="${no.nav.sdp-kanal.legal.archive.service.endpoint.url}"/>
-		<property name="logUsername" value="${no.nav.sdp-kanal.legal.archive.user.username}"/>
-		<property name="logPassword" value="${no.nav.sdp-kanal.legal.archive.user.password}"/>
-		<property name="maxRetries" value="${no.nav.sdp-kanal.legal.archive.maxRetries}"/>
-		<property name="retryIntervalInSeconds" value="${no.nav.sdp-kanal.legal.archive.retryIntervalInSeconds}"/>
-	</bean>-->
 	
 	<!-- LEGAL ARCHIVE for kvitteringer -->
 	<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveStub" />
-	<!--<bean id="legalArchiveKvittering" class="no.nav.kanal.log.LegalArchiveLoggerImpl">
-		<property name="logCaller" value="${no.nav.kanal.log.logCaller}"/>
-		<property name="logAction" value="${no.nav.kanal.log.kvittering.logAction}"/>
-		<property name="logServiceConsumer" value="${no.nav.kanal.log.kvittering.logServiceConsumer}"/>
-		<property name="logServiceProducer" value="${no.nav.kanal.log.kvittering.logServiceProducer}"/>
-		<property name="logEndpoint" value="${no.nav.sdp-kanal.legal.archive.service.endpoint.url}"/>
-		<property name="logUsername" value="${no.nav.sdp-kanal.legal.archive.user.username}"/>
-		<property name="logPassword" value="${no.nav.sdp-kanal.legal.archive.user.password}"/>
-		<property name="maxRetries" value="${no.nav.sdp-kanal.legal.archive.maxRetries}"/>
-		<property name="retryIntervalInSeconds" value="${no.nav.sdp-kanal.legal.archive.retryIntervalInSeconds}"/>
-	</bean> -->
     
     <bean id="jmstx" class="org.apache.camel.component.jms.JmsComponent">
     	<property name="configuration" ref="jmsConfig"/>
@@ -152,7 +130,7 @@
 			<bean ref="boqLoggerMelding" id="boqLoggerMeldingPrioritert"/>
 			<bean ref="deleteTempDir" id="deleteTempDirPrioritertBOQ"/>
 			<bean ref="backoutReason"/>
-			<to uri="ref:inputPriorityBackoutQueue"/>
+			<to uri="ref:inputQueuePriorityBackout"/>
 		</route>
 		
 		<!-- Rute for å få lagt standard meldinger på BOQ -->
@@ -163,7 +141,7 @@
 			<bean ref="boqLoggerMelding" id="boqLoggerMeldingStandard"/>
 			<bean ref="deleteTempDir" id="deleteTempDirStandardBOQ"/>
 			<bean ref="backoutReason"/>
-			<to uri="ref:inputBackoutQueue"/>
+			<to uri="ref:inputQueueNormalBackout"/>
 		</route>
 		
 		<!-- Rute for å sende prioritert DigitalPost -->
@@ -182,128 +160,6 @@
 			<!-- 			 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
 			<bean ref="flameEbmsPush" id="flameEbmsPushPrioritert"/>
 		</route>
-
-		<!-- Rute for å sende standard digital- eller fysisk post -->
-		<route id="sendDigitalPostStandard">
-			<from uri="ref:inputQueue"/>
-			<onException>
-				<exception>java.lang.Exception</exception>
-				<handled>
-					<constant>true</constant>
-				</handled>
-				<to uri="direct:dlqMeldingStandard"/>
-			</onException>
-			<bean ref="xmlExtractor" />
-			<bean ref="findMessageType" id="findMessageTypeStandard"/>
-			<bean ref="documentPackageCreator" />
-			<!-- 		 <bean ref="trantimeoutDetector" id="trantimeoutDetector"/> -->
-			<bean ref="flameEbmsPush" id="flameEbmsPushStandard"/>
-		</route>
-		
-		<!-- Rute for pulling av kvitteringer fra standard MPC. Startes med timer. -->
-		<route id="ebmsPullNormal_loop" messageHistory="false" autoStartup="false">
-			<from uri="ref:ebmsPullNormal"/>
-			<setHeader headerName="LOOP_INDICATOR_NORMAL" id="LOOP_INDICATOR_NORMAL">
-				<constant>direct:normal_pull</constant>
-			</setHeader>
-			<setHeader headerName="antall_meldinger" id="reset_antall_meldinger_normal">
-				<constant>0</constant>
-			</setHeader>
-			<dynamicRouter>
-				<header>LOOP_INDICATOR_NORMAL</header>
-			</dynamicRouter>
-			<log loggingLevel="INFO" message="End of pullrequest cycle for normal. No more messages. Fetched ${in.header.antall_meldinger} messages" />
-			<delay id="pullDelayNormal">
-			 	<simple>{{ebms.pullinterval.normal}}</simple>
-			 </delay>
-		</route>
-		
-		<!-- Rute for en pull-cycle fra standard MPC. -->
-		<route id="ebmsPullNormal_single" messageHistory="false">
-			<from uri="direct:normal_pull"/>
-			<setHeader headerName="MPC" id="setHeader MPC normal">
-				<constant>urn:normal</constant>
-			</setHeader>
-			<bean ref="ebmsPull" id="flameEbmsPullNormal"/>
-			<choice>
-				<when>
-					<header>LOOP_INDICATOR_NORMAL</header>
-					<doTry>
-			 			<bean ref="kvitteringValidator" id="kvitteringValidatorNormal"/>
-						<to uri="receiptQueue"/>
-						<bean ref="kvitteringLogger" id="kvitteringLoggerNormal"/>
-						<setHeader headerName="antall_meldinger" id="inc_antall_meldinger_normal">
-							<simple>${in.header.antall_meldinger}++</simple>
-						</setHeader>
-						<to uri="metrics:counter:ebmsPullNormal.antall"/>
-						<doCatch>
-							<exception>java.lang.Exception</exception>
-							<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
-							<log message="Verification of message received in pull FAILED" loggingLevel="ERROR" logName="no.nav.kanal"/>
-							<bean ref="boqLoggerKvittering" id="boqLoggerKvitteringNormal"/>
-							<to uri="receiptBackoutQueue"/>
-						</doCatch>
-					</doTry>
-				</when>
-				<otherwise>
-					<log loggingLevel="INFO" message="End of pullrequest cycle for normal. No message sent to queue." />
-				</otherwise>
-			</choice>
-			<log loggingLevel="DEBUG" message="Single pull done for normal" />
-		</route>
-		
-		<!-- Rute for pulling av kvitteringer fra prioritert MPC -->
-		<route id="ebmsPullPrioritert_loop" messageHistory="false" autoStartup="false">
-			<from uri="ref:ebmsPullPrioritert"/>
-			<setHeader headerName="LOOP_INDICATOR_PRIORITERT" id="LOOP_INDICATOR_PRIORITERT">
-				<constant>direct:prioritert_pull</constant>
-			</setHeader>
-			<setHeader headerName="antall_meldinger" id="reset_antall_meldinger_prioritert">
-				<constant>0</constant>
-			</setHeader>
-			<dynamicRouter>
-				<header>LOOP_INDICATOR_PRIORITERT</header>
-			</dynamicRouter>
-			<log loggingLevel="INFO" message="End of pullrequest cycle for prioritert. No more messages. Fetched ${in.header.antall_meldinger} messages" />
-			<delay id="pullDelayPrioritert">
-			 	<simple>{{ebms.pullinterval.prioritert}}</simple>
-			 </delay>
-		</route>
-		
-		<!-- Rute for en pull-cycle fra prioritert MPC. -->
-		<!--<route id="ebmsPullPrioritert_single" messageHistory="false">
-			<from uri="direct:prioritert_pull"/>
-			<setHeader headerName="MPC">
-				<constant>urn:prioritert</constant>
-			</setHeader>
-			<bean ref="ebmsPull" id="flameEbmsPullPrioritert"/>
-			<choice>
-				<when>
-					<header>LOOP_INDICATOR_PRIORITERT</header>
-					<doTry>
-			 			<bean ref="kvitteringValidator" id="kvitteringValidatorPrioritert"/>
-						<to uri="receiptPriorityQueue"/>
-						<bean ref="kvitteringLogger" id="kvitteringLoggerPrioritert"/>
-						<setHeader headerName="antall_meldinger" id="inc_antall_meldinger_prioritert">
-							<simple>${in.header.antall_meldinger}++</simple>
-						</setHeader>
-						<to uri="metrics:counter:ebmsPullPrioritert.antall"/>
-						<doCatch>
-							<exception>java.lang.Exception</exception>
-							<to uri="log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true"/>
-							<log message="Verification of message received in pull FAILED" loggingLevel="ERROR" logName="no.nav.kanal"/>
-							<bean ref="boqLoggerKvittering" id="boqLoggerKvitteringPrioritert"/>
-							<to uri="receiptPriorityBackoutQueue"/>
-						</doCatch>
-					</doTry>
-				</when>
-				<otherwise>
-					<log loggingLevel="INFO" message="End of pullrequest cycle for prioritert. No message sent to queue." />
-				</otherwise>
-			</choice>
-			<log loggingLevel="DEBUG" message="Single pull done for prioritert" />
-		</route>-->
-	
 	</camelContext>
 
 </beans>
