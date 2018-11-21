@@ -253,7 +253,7 @@
 						<configuration>
 							<transformers>
 								<transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>org.sonatype.haven.HavenCli</mainClass>
+									<mainClass>no.nav.kanal.SdpKanalApplicationKt</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
