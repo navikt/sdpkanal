@@ -7,5 +7,6 @@ pom.xml.releaseBackup
 .DS_Store
 *.log.*
 *.log
+dependency-reduced-pom.xml
 
 transaction-logs/

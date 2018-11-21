@@ -1,5 +1,6 @@
 package no.nav.kanal.camel
 
+import com.jcraft.jsch.ChannelSftp
 import no.difi.begrep.sdp.schema_v10.SDPDokument
 import no.difi.begrep.sdp.schema_v10.SDPManifest
 import no.difi.sdp.client2.asice.AsicEAttachable
@@ -27,6 +28,7 @@ import javax.xml.transform.stream.StreamResult
 
 class DocumentPackageCreator @Autowired constructor(
         private val sdpKeys: SdpKeys,
+        private val sftpChannel: ChannelSftp,
         private val documentDirectory: String
 ) : Processor {
     val log: Logger = LoggerFactory.getLogger(DocumentPackageCreator::class.java)
@@ -77,10 +79,16 @@ class DocumentPackageCreator @Autowired constructor(
         const val DOCUMENT_PACKAGE = "DOCUMENT_PACKAGE"
     }
 
-    private fun SDPDokument.toAttachable() = SDPDokumentAsicEWrapper(this, documentDirectory)
+    private fun SDPDokument.toAttachable() = SDPDokumentAsicEWrapper(this, sftpChannel, documentDirectory)
 
-    class SDPDokumentAsicEWrapper(private val sdpDokument: SDPDokument, documentDirectory: String) : AsicEAttachable {
-        private val documentBytes: ByteArray = Files.readAllBytes(Paths.get(documentDirectory + "/" + sdpDokument.href))
+    class SDPDokumentAsicEWrapper(
+            private val sdpDokument: SDPDokument,
+            sftpChannel: ChannelSftp, documentDirectory: String
+    ) : AsicEAttachable {
+        private val documentBytes: ByteArray = ByteArrayOutputStream().use {
+            sftpChannel.get(documentDirectory + sdpDokument.href, it)
+            it.toByteArray()
+        }
 
         override fun getFileName(): String = sdpDokument.href
         override fun getMimeType(): String = sdpDokument.mime

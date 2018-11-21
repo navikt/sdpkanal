@@ -3,6 +3,19 @@ package no.nav.kanal
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.jcraft.jsch.ChannelSftp
+import com.jcraft.jsch.JSch
+import io.ktor.application.call
+import io.ktor.http.ContentType
+import io.ktor.response.respondText
+import io.ktor.response.respondTextWriter
+import io.ktor.routing.get
+import io.ktor.routing.routing
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
+import io.prometheus.client.CollectorRegistry
+import io.prometheus.client.exporter.common.TextFormat
+import kotlinx.coroutines.runBlocking
 import no.digipost.api.representations.EbmsAktoer
 import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
@@ -23,9 +36,16 @@ import no.nav.kanal.route.createSendRoute
 import org.apache.camel.component.jms.JmsEndpoint
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.DefaultShutdownStrategy
+import org.apache.commons.io.IOUtils
 import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.util.Base64
+import java.util.concurrent.TimeUnit
 import javax.jms.Session
 
+
+const val METRICS_NAMESPACE = "sdpkanal"
 val objectMapper: ObjectMapper = ObjectMapper().registerKotlinModule()
 
 fun main(args: Array<String>) {
@@ -41,6 +61,11 @@ fun main(args: Array<String>) {
     val mqConnection = createConnectionFactory(config.mqHostname, config.mqPort, config.mqQueueManager, config.mqChannel, vaultCredentials)
     val jmsConfig = createJmsConfig(mqConnection, config.mqConcurrentConsumers)
 
+    val jschSession = JSch().apply {
+        addIdentity(config.sftpKeyPath, vaultCredentials.sftpKeyPassword)
+    }.getSession(config.sftpUrl)
+    val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
+
     val session = mqConnection.createConnection().createSession(false, Session.AUTO_ACKNOWLEDGE)
 
     val legalArhive = LegalArchiveStub()
@@ -50,7 +75,7 @@ fun main(args: Array<String>) {
     val boqLogger = BOQLogger()
     val backoutReason = BackoutReason()
     val xmlExtractor = XmlExtractor()
-    val documentPackageCreator = DocumentPackageCreator(sdpKeys, config.documentDirectory)
+    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
 
     val camelContext = DefaultCamelContext().apply {
         fun createJmsEndpoint(queueName: String): JmsEndpoint {
@@ -83,11 +108,31 @@ fun main(args: Array<String>) {
     }
     camelContext.start()
 
-    Runtime.getRuntime().addShutdownHook(Thread {
-        camelContext.stop()
-    })
+    runBlocking {
+        val ktorServer = embeddedServer(CIO, 8080) {
+            routing {
+                get("/is_alive") {
+                    call.respondText("I'm alive")
+                }
 
-    while (camelContext.isStarted) {
-        Thread.sleep(100)
+                get("/is_ready") {
+                    call.respondText("I'm ready")
+                }
+
+                get("/prometheus") {
+                    val names = call.request.queryParameters.getAll("name[]")?.toSet() ?: setOf()
+                    call.respondTextWriter(ContentType.parse(TextFormat.CONTENT_TYPE_004)) {
+                        TextFormat.write004(this, CollectorRegistry.defaultRegistry.filteredMetricFamilySamples(names))
+                    }
+                }
+            }
+        }
+
+        Runtime.getRuntime().addShutdownHook(Thread {
+            camelContext.stop()
+            ktorServer.stop(10, 10, TimeUnit.SECONDS)
+        })
+
+        ktorServer.start(wait = true)
     }
 }
