@@ -68,6 +68,7 @@ fun main(args: Array<String>) {
     }.getSession(vaultCredentials.sftpUsername, config.sftpUrl)
     jschSession.connect()
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
+    sftpChannel.connect()
 
     val session = mqConnection.createConnection().createSession(false, Session.AUTO_ACKNOWLEDGE)
 
