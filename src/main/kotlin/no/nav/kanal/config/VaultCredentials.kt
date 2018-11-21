@@ -6,5 +6,6 @@ data class VaultCredentials(
     val virksomhetKeystorePassword: String,
     val virksomhetKeystoreAlias: String,
     val truststorePassword: String,
+    val sftpUsername: String,
     val sftpKeyPassword: String
 )
