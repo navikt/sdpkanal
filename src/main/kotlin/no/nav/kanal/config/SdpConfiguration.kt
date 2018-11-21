@@ -48,7 +48,7 @@ data class SdpConfiguration(
         val mpcPrioritert: String = config["ebms.mpc.prioritert"],
         val maxRetries: Long = config["ebms.push.maxRetries"],
         val retryIntervalInSeconds: Long = config["ebms.push.retryInterval"],
-        val documentDirectory: String = config["no.nav.kanal.dokument.path.prefix"],
+        val documentDirectory: String = config["no.nav.sdpkanal.dokument.path.prefix"],
         val sftpUrl: String = config["no.nav.sdpkanal.sftp.url"],
         val sftpKeyPath: String = config["no.nav.sdpkanal.sftp.key.path"],
         val knownHostsFile: String = config["no.nav.sdpkanal.sftp.known.hosts"]
