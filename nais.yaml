@@ -51,6 +51,6 @@ fasitResources:
 #  - alias: sdpkanal_channel
 #    resourceType: Channel
   - alias: varseltjeneste_channel
-    resoruceType: Channel
+    resourceType: Channel
     propertyMap:
       name: SDPKANAL_CHANNEL_NAME
