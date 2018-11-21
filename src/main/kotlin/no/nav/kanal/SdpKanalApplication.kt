@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jcraft.jsch.ChannelSftp
+import com.jcraft.jsch.HostKey
 import com.jcraft.jsch.JSch
 import io.ktor.application.call
 import io.ktor.http.ContentType
@@ -63,6 +64,7 @@ fun main(args: Array<String>) {
 
     val jschSession = JSch().apply {
         addIdentity(config.sftpKeyPath, vaultCredentials.sftpKeyPassword)
+        setKnownHosts(config.knownHostsFile)
     }.getSession(vaultCredentials.sftpUsername, config.sftpUrl)
     jschSession.connect()
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
