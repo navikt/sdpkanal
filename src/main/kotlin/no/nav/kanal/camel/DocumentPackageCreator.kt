@@ -85,8 +85,11 @@ class DocumentPackageCreator @Autowired constructor(
             private val sdpDokument: SDPDokument,
             sftpChannel: ChannelSftp, documentDirectory: String
     ) : AsicEAttachable {
+        private val log = LoggerFactory.getLogger(SDPDokumentAsicEWrapper::class.java)
         private val documentBytes: ByteArray = ByteArrayOutputStream().use {
-            sftpChannel.get(documentDirectory + sdpDokument.href, it)
+            val filePath = documentDirectory + sdpDokument.href
+            log.info("Trying to download file $filePath")
+            sftpChannel.get(filePath, it)
             it.toByteArray()
         }
 
