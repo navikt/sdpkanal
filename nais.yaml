@@ -25,6 +25,7 @@ resources:
   requests:
     cpu: 100m
     memory: 768Mi
+secrets: true
 fasitResources:
   used:
   - alias: ebms.msh
