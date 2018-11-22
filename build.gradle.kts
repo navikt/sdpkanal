@@ -80,6 +80,10 @@ dependencies {
     }
     implementation("org.apache.santuario:xmlsec:$xmlSecVersion")
     implementation("org.glassfish.jaxb:jaxb-runtime:$glassfishJaxbVersion")
+    implementation("org.jvnet.jaxb2_commons:jaxb2-basics-runtime:1.11.1") {
+        exclude(module = "jaxb-runtime")
+        exclude(module = "jaxb-api")
+    }
 
     // Camel
     implementation("org.apache.camel:camel-core:$camelVersion")
