@@ -3,9 +3,9 @@
 pipeline {
     agent any
 
-    tools {
-        //jdk 'openjdk11'
-    }
+    //tools {
+    //    jdk 'openjdk11'
+    //}
 
     environment {
         ZONE = 'fss'
