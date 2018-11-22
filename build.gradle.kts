@@ -44,6 +44,10 @@ repositories {
     maven { url = uri("https://jcenter.bintray.com") }
 }
 
+tasks.create("printVersion") {
+    println(project.version)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform {
         includeEngines("spek2")
@@ -90,10 +94,4 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
-}
-
-tasks {
-    "printVersion" {
-        println(project.version)
-    }
 }
