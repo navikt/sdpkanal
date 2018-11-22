@@ -13,23 +13,23 @@ pipeline {
     stages {
         stage('initialize') {
             steps {
-                init action: 'maven'
+                init action: 'gradle'
             }
         }
         stage('build') {
             steps {
-                sh 'mvn clean compile -DskipTests'
+                sh './gradlew build -x test'
             }
         }
         stage('run tests (unit & intergration)') {
             steps {
-                sh 'mvn verify'
+                sh './gradlew test'
                 slackStatus status: 'passed'
             }
         }
         stage('extract application files') {
             steps {
-                sh 'mvn package -DskipTests'
+                sh './gradlew installDist'
             }
         }
         stage('push docker image') {
@@ -62,5 +62,11 @@ pipeline {
         failure {
             postProcess action: 'failure'
         }
+    }
+}
+
+tasks {
+    "printVersion" {
+        println(project.version)
     }
 }

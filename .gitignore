@@ -1,12 +1,17 @@
-c:/
-target/
+# Idea project files
 *.iml
 .idea/
-release.properties
-pom.xml.releaseBackup
+
+# Gradle files
+out/
+build/
+.gradle/
+
+# OS Specific
 .DS_Store
+
+# JMS
 *.log.*
 *.log
-dependency-reduced-pom.xml
 
 transaction-logs/
