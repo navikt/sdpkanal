@@ -38,6 +38,7 @@ class DocumentPackageCreator @Autowired constructor(
 
     private val createSignature = CreateSignature()
     private val createZip = CreateZip()
+    private val base64Decoder = Base64.getDecoder()
 
     override fun process(exchange: Exchange) {
         val sdpPayload: SdpPayload = exchange.`in`.header(XmlExtractor.SDP_PAYLOAD)
@@ -60,12 +61,12 @@ class DocumentPackageCreator @Autowired constructor(
 
         val archive = createZip.zipIt(files)
 
-        val certificate = Sertifikat.fraByteArray(sdpPayload.certificate)
+        val certificate = Sertifikat.fraByteArray(base64Decoder.decode(sdpPayload.certificate))
         val encryptedASiCE = createCMSDocument.createCMS(archive.bytes, certificate)
         log.info("Encrypted package with {} bytes, is now {}, used certificate {}",
                 archive.bytes.size,
                 encryptedASiCE.bytes.size,
-                Base64.getEncoder().encodeToString(Base64.getEncoder().encode(sdpPayload.certificate)))
+                Base64.getEncoder().encodeToString(sdpPayload.certificate))
 
         log.info("Certificate information: {}", certificate.x509Certificate)
 
