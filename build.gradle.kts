@@ -73,7 +73,7 @@ dependencies {
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
     implementation("io.prometheus:simpleclient_common:$prometheusVersion")
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
-    //implementation("javax.transaction:jta:$jtaApiVersion")
+    implementation("javax.transaction:jta:$jtaApiVersion")
     //implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
     //    exclude(module = "jaxb2-basics-runtime")
