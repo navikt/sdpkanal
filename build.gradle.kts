@@ -75,7 +75,9 @@ dependencies {
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
     implementation("javax.transaction:jta:$jtaApiVersion")
     implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
-    implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion")
+    implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
+        exclude(module = "jaxb2-basics-runtime")
+    }
     implementation("org.apache.santuario:xmlsec:$xmlSecVersion")
     implementation("org.glassfish.jaxb:jaxb-runtime:$glassfishJaxbVersion")
 
