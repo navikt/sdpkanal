@@ -52,9 +52,9 @@ pipeline {
     post {
         always {
             postProcess action: 'always'
-            junit '**/build/test-results/test/*.xml'
-            archiveArtifacts artifacts: '**/build/libs/*', allowEmptyArchive: true
-            archiveArtifacts artifacts: '**/build/install/*', allowEmptyArchive: true
+            junit testResults: '**/target/surefire-reports/*.xml', allowEmptyResults: true
+            junit testResults: '**/target/failsafe-reports/*.xml', allowEmptyResults: true
+            archiveArtifacts artifacts: '**/target/*.jar', allowEmptyArchive: true
         }
         success {
             postProcess action: 'success'
