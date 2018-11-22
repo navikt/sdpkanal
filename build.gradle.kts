@@ -76,14 +76,14 @@ dependencies {
     implementation("javax.transaction:jta:$jtaApiVersion")
     implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
-        exclude(module = "jaxb2-basics-runtime")
+    //    exclude(module = "jaxb2-basics-runtime")
     }
     implementation("org.apache.santuario:xmlsec:$xmlSecVersion")
-    implementation("org.glassfish.jaxb:jaxb-runtime:$glassfishJaxbVersion")
-    implementation("org.jvnet.jaxb2_commons:jaxb2-basics-runtime:1.11.1") {
-        exclude(module = "jaxb-runtime")
-        exclude(module = "jaxb-api")
-    }
+    //implementation("org.glassfish.jaxb:jaxb-runtime:$glassfishJaxbVersion")
+    //implementation("org.jvnet.jaxb2_commons:jaxb2-basics-runtime:1.11.1") {
+    //    exclude(module = "jaxb-runtime")
+    //    exclude(module = "jaxb-api")
+    //}
 
     // Camel
     implementation("org.apache.camel:camel-core:$camelVersion")
