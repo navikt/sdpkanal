@@ -1,5 +1,6 @@
 package no.nav.kanal.camel
 
+import no.difi.begrep.sdp.schema_v10.SDPMelding
 import no.nav.kanal.SdpPayload
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
@@ -13,7 +14,7 @@ class XmlExtractor : Processor {
     private val log = LoggerFactory.getLogger(XmlExtractor::class.java)
     private val xmlInputFactory = XMLInputFactory.newFactory()
 
-    private val payloadUnmarshaller = JAXBContext.newInstance(SdpPayload::class.java)
+    private val payloadUnmarshaller = JAXBContext.newInstance(SdpPayload::class.java, SDPMelding::class.java)
 
     override fun process(exchange: Exchange) {
         log.info("Extracting required metadata")
