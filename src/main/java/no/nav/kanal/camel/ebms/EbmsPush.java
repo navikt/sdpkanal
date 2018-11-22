@@ -8,6 +8,7 @@ import javax.xml.ws.soap.SOAPFaultException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import no.digipost.api.MessageSender;
 import no.digipost.api.representations.*;
+import no.nav.kanal.SdpPayload;
 import no.nav.kanal.camel.DocumentPackageCreator;
 import no.nav.kanal.camel.XmlExtractor;
 import no.nav.kanal.config.EbmsKt;
@@ -86,7 +87,7 @@ public class EbmsPush implements Processor {
 
 
 	private TransportKvittering createAndSendMessage(Exchange exchangeIn) {
-		StandardBusinessDocument sbd = exchangeIn.getIn().getHeader(XmlExtractor.STANDARD_BUSINESS_DOCUMENT, StandardBusinessDocument.class);
+		StandardBusinessDocument sbd = exchangeIn.getIn().getHeader(XmlExtractor.SDP_PAYLOAD, SdpPayload.class).standardBusinessDocument;
 
 		Dokumentpakke documentPackage = exchangeIn.getIn().getHeader(DocumentPackageCreator.DOCUMENT_PACKAGE, Dokumentpakke.class);
 

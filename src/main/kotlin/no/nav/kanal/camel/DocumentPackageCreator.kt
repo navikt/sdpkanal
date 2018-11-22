@@ -11,18 +11,15 @@ import no.difi.sdp.client2.domain.Sertifikat
 import no.difi.sdp.client2.internal.CreateCMSDocument
 import no.digipost.api.representations.Dokumentpakke
 import no.digipost.api.xml.Schemas
+import no.nav.kanal.SdpPayload
 import no.nav.kanal.config.SdpKeys
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.oxm.jaxb.Jaxb2Marshaller
-import org.springframework.stereotype.Service
 import java.io.ByteArrayOutputStream
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.util.Base64
 import javax.xml.transform.stream.StreamResult
 
@@ -43,15 +40,15 @@ class DocumentPackageCreator @Autowired constructor(
     private val createZip = CreateZip()
 
     override fun process(exchange: Exchange) {
-        val manifest = exchange.getIn().getHeader(XmlExtractor.MANIFEST_HEADER, SDPManifest::class.java)
-        val manifestFiles = listOf(listOf(manifest.hoveddokument), manifest.vedleggs).flatten()
+        val sdpPayload: SdpPayload = exchange.`in`.header(XmlExtractor.SDP_PAYLOAD)
+        val manifestFiles = listOf(listOf(sdpPayload.manifest.hoveddokument), sdpPayload.manifest.vedleggs).flatten()
         val files: MutableList<AsicEAttachable> = manifestFiles.map { it.toAttachable() }.toMutableList()
 
         // TODO: Do some cleanup, this could be done better
         manifestFiles.forEach { it.href = it.href.split("/").last()  }
 
         val asicEManifest = Manifest(ByteArrayOutputStream().use {
-            marshaller.marshal(manifest, StreamResult(it))
+            marshaller.marshal(sdpPayload.manifest, StreamResult(it))
             it.toByteArray()
         })
 
@@ -63,12 +60,12 @@ class DocumentPackageCreator @Autowired constructor(
 
         val archive = createZip.zipIt(files)
 
-        val certificate = Sertifikat.fraByteArray(exchange.getIn().getHeader(XmlExtractor.CERTIFICATE, ByteArray::class.java))
+        val certificate = Sertifikat.fraByteArray(sdpPayload.certificate)
         val encryptedASiCE = createCMSDocument.createCMS(archive.bytes, certificate)
         log.info("Encrypted package with {} bytes, is now {}, used certificate {}",
                 archive.bytes.size,
                 encryptedASiCE.bytes.size,
-                Base64.getEncoder().encodeToString(Base64.getEncoder().encode(certificate.encoded)))
+                Base64.getEncoder().encodeToString(Base64.getEncoder().encode(sdpPayload.certificate)))
 
         log.info("Certificate information: {}", certificate.x509Certificate)
 
