@@ -67,6 +67,8 @@ dependencies {
     implementation("com.ibm.mq:com.ibm.mq.allclient:$mqVersion")
     implementation("com.jcraft:jsch:$jschVersion")
     implementation("com.sun.xml.messaging.saaj:saaj-impl:$saajVersion")
+    // Temporary, the version of mimepull saaj depends on has been removed from maven central
+    implementation("org.jvnet.mimepull:mimepull:1.9.10")
     implementation("commons-io:commons-io:$commonsIOVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
     implementation("io.prometheus:simpleclient_common:$prometheusVersion")
