@@ -66,15 +66,15 @@ dependencies {
     implementation("com.fasterxml.woodstox:woodstox-core:$woodstoxVersion")
     implementation("com.ibm.mq:com.ibm.mq.allclient:$mqVersion")
     implementation("com.jcraft:jsch:$jschVersion")
-    implementation("com.sun.xml.messaging.saaj:saaj-impl:$saajVersion")
+    //implementation("com.sun.xml.messaging.saaj:saaj-impl:$saajVersion")
     // Temporary, the version of mimepull saaj depends on has been removed from maven central
-    implementation("org.jvnet.mimepull:mimepull:1.9.10")
+    //implementation("org.jvnet.mimepull:mimepull:1.9.10")
     implementation("commons-io:commons-io:$commonsIOVersion")
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
     implementation("io.prometheus:simpleclient_common:$prometheusVersion")
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
-    implementation("javax.transaction:jta:$jtaApiVersion")
-    implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
+    //implementation("javax.transaction:jta:$jtaApiVersion")
+    //implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
     //    exclude(module = "jaxb2-basics-runtime")
     }
