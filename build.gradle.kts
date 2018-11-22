@@ -91,3 +91,9 @@ dependencies {
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
 }
+
+tasks {
+    "printVersion" {
+        println(project.version)
+    }
+}

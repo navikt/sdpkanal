@@ -68,9 +68,3 @@ pipeline {
         }
     }
 }
-
-tasks {
-    "printVersion" {
-        println(project.version)
-    }
-}
