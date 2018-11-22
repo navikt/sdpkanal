@@ -37,11 +37,10 @@ application {
 
 repositories {
     mavenLocal()
-    jcenter()
     mavenCentral()
+    jcenter()
     maven { url = uri("https://dl.bintray.com/kotlin/ktor") }
     maven { url = uri("https://dl.bintray.com/spekframework/spek-dev") }
-    maven { url = uri("https://jcenter.bintray.com") }
 }
 
 tasks.create("printVersion") {
