@@ -7,5 +7,4 @@ ENV NO_NAV_SDPKANAL_CREDENTIALSPATH=/var/run/secrets/nais.io/vault/credentials.j
 ENV NO_NAV_SDPKANAL_SFTP_KEY_PATH=/var/run/secrets/nais.io/vault/sftp_key
 ENV NO_NAV_SDPKANAL_SFTP_KNOWN_HOSTS=/var/run/secrets/nais.io/vault/known_hosts
 
-COPY build/install/sdpkanal/bin/sdpkanal bin/app
-COPY build/install/sdpkanal/lib lib/
+COPY build/libs/sdpkanal*-all.jar app.jar

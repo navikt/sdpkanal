@@ -31,9 +31,9 @@ pipeline {
                 slackStatus status: 'passed'
             }
         }
-        stage('extract application files') {
+        stage('create uber jar') {
             steps {
-                sh './gradlew installDist'
+                sh './gradlew shadowJar'
             }
         }
         stage('push docker image') {

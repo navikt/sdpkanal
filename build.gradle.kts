@@ -1,3 +1,4 @@
+import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.sdp-kanal"
@@ -28,11 +29,7 @@ val xmlSecVersion = "2.1.2"
 plugins {
     java
     kotlin("jvm") version "1.3.10"
-    application
-}
-
-application {
-    mainClassName = "no.nav.kanal.SdpKanalApplicationKt"
+    id("com.github.johnrengelman.shadow") version "4.0.3"
 }
 
 repositories {
@@ -58,6 +55,10 @@ tasks.withType<Test> {
 
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "1.8"
+}
+
+tasks.withType<Jar> {
+    manifest.attributes["Main-Class"] = "no.nav.kanal.SdpKanalApplicationKt"
 }
 
 dependencies {
