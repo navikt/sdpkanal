@@ -6,7 +6,10 @@ import java.net.UnknownHostException;
 import javax.xml.ws.soap.SOAPFaultException;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import no.difi.begrep.sdp.schema_v10.SDPDigitalPost;
+import no.difi.begrep.sdp.schema_v10.SDPMelding;
 import no.digipost.api.MessageSender;
+import no.digipost.api.PMode;
 import no.digipost.api.representations.*;
 import no.nav.kanal.SdpPayload;
 import no.nav.kanal.camel.DocumentPackageCreator;
@@ -92,9 +95,11 @@ public class EbmsPush implements Processor {
 		Dokumentpakke documentPackage = exchangeIn.getIn().getHeader(DocumentPackageCreator.DOCUMENT_PACKAGE, Dokumentpakke.class);
 
 		Organisasjonsnummer sbdhMottaker = Organisasjonsnummer.of(sbd.getStandardBusinessDocumentHeader().getReceivers().get(0).getIdentifier().getValue());
+		SDPDigitalPost sdpMelding = (SDPDigitalPost) sbd.getAny();
 
 		return messageSender.send(EbmsForsendelse
 				.create(datahandler, receiver, sbdhMottaker, sbd, documentPackage)
+				.withAction(sdpMelding.getDigitalPostInfo() == null ? PMode.Action.FORMIDLE_FYSISK : PMode.Action.FORMIDLE_DIGITAL)
 				.withMpcId(exchangeIn.getIn().getHeader(EbmsKt.MPC_ID, String.class))
 				.build());
 	}
