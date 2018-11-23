@@ -99,6 +99,7 @@ public class EbmsPush implements Processor {
 
 		return messageSender.send(EbmsForsendelse
 				.create(datahandler, receiver, sbdhMottaker, sbd, documentPackage)
+				.withMessageId(sbd.getStandardBusinessDocumentHeader().getBusinessScope().getScopes().get(0).getInstanceIdentifier())
 				.withAction(sdpMelding.getDigitalPostInfo() == null ? PMode.Action.FORMIDLE_FYSISK : PMode.Action.FORMIDLE_DIGITAL)
 				.withMpcId(exchangeIn.getIn().getHeader(EbmsKt.MPC_ID, String.class))
 				.build());
