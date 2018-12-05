@@ -102,4 +102,8 @@ dependencies {
     testImplementation("org.spekframework.spek2:spek-dsl-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
+
+    testImplementation("org.apache.cxf:cxf-rt-frontend-jaxws:3.2.7")
+    testImplementation("org.apache.cxf:cxf-rt-transports-http-jetty:3.2.7")
+    testImplementation("org.apache.cxf:cxf-rt-ws-security:3.2.7")
 }

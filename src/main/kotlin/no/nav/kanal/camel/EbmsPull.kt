@@ -23,8 +23,10 @@ class EbmsPull constructor(
 
         if (receipt != null) {
             sender.bekreft(receipt)
-            val bytes = ByteArrayOutputStream()
-            Marshalling.getMarshallerSingleton().jaxbContext.createMarshaller().marshal(receipt.sbd, bytes)
+            val bytes = ByteArrayOutputStream().use {
+                Marshalling.getMarshallerSingleton().jaxbContext.createMarshaller().marshal(receipt.sbd, it)
+                it
+            }.toByteArray()
             exchange.`in`.body = bytes
         }
     }
