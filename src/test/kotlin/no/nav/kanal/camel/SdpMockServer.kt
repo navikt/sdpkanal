@@ -29,6 +29,7 @@ import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.PartyInfo
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.PayloadInfo
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.Property
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.Receipt
+import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.Service
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.SignalMessage
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.To
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.UserMessage
@@ -69,7 +70,7 @@ import javax.xml.soap.SOAPConstants
 import javax.xml.soap.SOAPMessage
 import javax.xml.ws.BindingType
 import javax.xml.ws.Provider
-import javax.xml.ws.Service
+import javax.xml.ws.Service as WSService
 import javax.xml.ws.ServiceMode
 import javax.xml.ws.WebServiceProvider
 import javax.xml.ws.soap.SOAPBinding
@@ -126,7 +127,7 @@ object DefaultSbdHandler : SbdHandler {
         serviceName = "FormidleDigitalPost",
         targetNamespace = "http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
 )
-@ServiceMode(value = Service.Mode.MESSAGE)
+@ServiceMode(value = WSService.Mode.MESSAGE)
 class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
     private val signatureFactory: XMLSignatureFactory = XMLSignatureFactory.getInstance("DOM")
     private val messageFactory: MessageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL)
@@ -135,6 +136,14 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
     private val signatureUnmarshaller: Unmarshaller = JAXBContext.newInstance(Signature::class.java).createUnmarshaller()
     private val digestMethod: DigestMethod = signatureFactory.newDigestMethod(DigestMethod.SHA256, null)
     private val transforms: List<Transform> = listOf(signatureFactory.newTransform(Transform.ENVELOPED, null as TransformParameterSpec?))
+
+    private val agreementUrl = "http://begrep.difi.no/SikkerDigitalPost/Meldingsutveksling/FormidleDigitalPostForsendelse"
+    private val agreementRef: AgreementRef = AgreementRef(agreementUrl,  null, "nav-digital-post")
+    private val collaberatorService: Service = Service("SDP", null)
+    private val orgNrPartyType = "urn:oasis:names:tc:ebcore:partyid-type:iso6523:9908"
+    private val sdpFrom = From(listOf(PartyId(meldingsformidlerOrgNr, orgNrPartyType)), "urn:sdp:meldingsformidler")
+    // TODO: Respond with sender org nr
+    private val sdpPartyInfo: PartyInfo = PartyInfo(sdpFrom, To(listOf(PartyId(navOrgNr, orgNrPartyType)), "urn:sdp:avsender"))
 
     private val keyInfo = keystore.getCertificate("posten").let {
         val keyInfoFactory  = signatureFactory.keyInfoFactory
@@ -152,6 +161,15 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
         val messagingHeader = messagingUnmarshaller.unmarshal(request.soapHeader.getChildElements(messagingNamespace).next() as Node, Messaging::class.java).value
         val wsseHeader = request.soapHeader.getChildElements(wsseNamespace).next() as Node
 
+        // If its a user message its most likely a distribution request
+        val isUserMessage = messagingHeader.userMessages == null || messagingHeader.userMessages.isEmpty()
+
+        val action = if (isUserMessage) {
+            "FormidleDigitalPost"
+        } else {
+            "KvitteringsForespoersel"
+        }
+
         val attachments = request.attachments.toList().map { it as AttachmentPart }.map { attachment ->
             EbmsAttachment(
                     contentId = attachment.contentId.replace("<", "cid:").replace(">", ""),
@@ -163,14 +181,14 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
             val messaging = Messaging().apply {
                 userMessages.add(UserMessage().apply {
                     messageInfo = MessageInfo(ZonedDateTime.now(), "TODO", "TODOHEHE")
-                    partyInfo = PartyInfo(From(listOf(PartyId(meldingsformidlerOrgNr, "urn:oasis:names:tc:ebcore:partyid-type:iso6523:9908")), "urn:sdp:meldingsformidler"), To(listOf(PartyId(navOrgNr, "urn:oasis:names:tc:ebcore:partyid-type:iso6523:9908")), "urn:sdp:avsender")) // TODO: Use the sender org number here
-                    collaborationInfo = CollaborationInfo(AgreementRef("http://begrep.difi.no/SikkerDigitalPost/Meldingsutveksling/FormidleDigitalPostForsendelse",  null, "nav-digital-post"), org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.Service("SDP", null), "FormidleDigitalPost", "TODO:conversationid")
+                    collaborationInfo = CollaborationInfo(agreementRef, collaberatorService, action, "TODO:conversationid")
 
+                    partyInfo = sdpPartyInfo
                     // TODO: this can be done better?
-                    if (attachments.isEmpty()) {
-                        payloadInfo = PayloadInfo(listOf(PartInfo()))
+                    payloadInfo = if (attachments.isEmpty()) {
+                        PayloadInfo(listOf(PartInfo()))
                     } else {
-                        payloadInfo = PayloadInfo(attachments.map { attachment ->
+                        PayloadInfo(attachments.map { attachment ->
                             PartInfo(null, null, PartProperties(attachment.mimeHeaders.map { Property(it.value, it.name) }), attachment.contentId)
                         })
                     }
@@ -211,7 +229,7 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
                     businessScope = BusinessScope(listOf(Scope("ConversationId", "TODO:ConversationId", "urn:no:difi:sdp:1.0", listOf())))
                 }
 
-                if (messagingHeader.userMessages == null || messagingHeader.userMessages.isEmpty()) {
+                if (isUserMessage) {
                     sbdHandler.handleSignalMessage(this, messagingHeader.signalMessages.first())
                 } else {
                     sbdHandler.handleUserMessage(this, messagingHeader.userMessages.first())
