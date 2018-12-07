@@ -1,8 +1,11 @@
 package no.nav.kanal.camel
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.sun.org.apache.xpath.internal.NodeSet
 import no.difi.begrep.sdp.schema_v10.SDPKvittering
 import no.difi.begrep.sdp.schema_v10.SDPLevering
 import no.difi.begrep.sdp.schema_v10.SDPMelding
+import no.difi.begrep.sdp.schema_v10.SDPMottak
 import org.apache.cxf.binding.soap.SoapMessage
 import org.apache.cxf.binding.soap.interceptor.SoapInterceptor
 import org.apache.cxf.feature.LoggingFeature
@@ -50,6 +53,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.time.ZonedDateTime
 import java.util.Properties
+import java.util.UUID
 import javax.security.auth.callback.CallbackHandler
 import javax.xml.bind.JAXBContext
 import javax.xml.bind.Marshaller
@@ -74,12 +78,13 @@ import javax.xml.ws.Service as WSService
 import javax.xml.ws.ServiceMode
 import javax.xml.ws.WebServiceProvider
 import javax.xml.ws.soap.SOAPBinding
+import javax.xml.xpath.XPath
 import javax.xml.xpath.XPathConstants
+import javax.xml.xpath.XPathExpression
 import javax.xml.xpath.XPathFactory
 
 val meldingsformidlerOrgNr = "984661185"
 val navOrgNr = "889640782"
-val distributeAgreementRef = "http://begrep.difi.no/SikkerDigitalPost/1.0/transportlag/Meldingsutveksling/FormidleDigitalPostForsendelse"
 
 private val messagingContext: JAXBContext = JAXBContext.newInstance(Messaging::class.java, NonRepudiationInformation::class.java)
 private val messagingUnmarshaller: Unmarshaller = messagingContext.createUnmarshaller()
@@ -87,6 +92,12 @@ private val messagingMarshaller: Marshaller = messagingContext.createMarshaller(
 private val referenceUnmarshaller: Unmarshaller = JAXBContext.newInstance(Reference::class.java).createUnmarshaller()
 val messagingNamespace = QName("http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/", "Messaging")
 val wsseNamespace = QName("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security")
+// Not sure about localName
+val wsuNamespace = QName("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", "Id", "wsu")
+val ebmsXpath: XPath = XPathFactory.newInstance().newXPath().apply {
+    namespaceContext = EbmsNamespaceContext
+}
+val wsseResourceXPath: XPathExpression = ebmsXpath.compile("./ds:Signature/ds:SignedInfo/ds:Reference")
 
 val keystore = generateKeyStore().apply {
     Files.newOutputStream(Paths.get("build/keystore.p12")).use {
@@ -102,12 +113,6 @@ interface SbdHandler {
 
 object DefaultSbdHandler : SbdHandler {
     override fun handleUserMessage(sbd: StandardBusinessDocument, userMessage: UserMessage) {
-        sbd.apply {
-            any = SDPKvittering().apply {
-                tidspunkt = ZonedDateTime.now()
-                levering = SDPLevering()
-            }
-        }
     }
 
 
@@ -115,7 +120,8 @@ object DefaultSbdHandler : SbdHandler {
         sbd.apply {
             any = SDPKvittering().apply {
                 tidspunkt = ZonedDateTime.now()
-                levering = SDPLevering()
+                mottak = SDPMottak()
+                //levering = SDPLevering()
             }
         }
     }
@@ -128,7 +134,7 @@ object DefaultSbdHandler : SbdHandler {
         targetNamespace = "http://www.unece.org/cefact/namespaces/StandardBusinessDocumentHeader"
 )
 @ServiceMode(value = WSService.Mode.MESSAGE)
-class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
+class Soap(private val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
     private val signatureFactory: XMLSignatureFactory = XMLSignatureFactory.getInstance("DOM")
     private val messageFactory: MessageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL)
     // private val documentBuilder: DocumentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
@@ -152,17 +158,11 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
     private val signatureKey = keystore.getKey("posten", "changeit".toCharArray())
 
     override fun invoke(request: SOAPMessage): SOAPMessage {
-        val message = ByteArrayOutputStream().use {
-            request.writeTo(it)
-            it
-        }.toByteArray().toString(Charsets.UTF_8)
-        println(message)
-        println(request.soapHeader.getChildElements(messagingNamespace).javaClass)
         val messagingHeader = messagingUnmarshaller.unmarshal(request.soapHeader.getChildElements(messagingNamespace).next() as Node, Messaging::class.java).value
         val wsseHeader = request.soapHeader.getChildElements(wsseNamespace).next() as Node
 
         // If its a user message its most likely a distribution request
-        val isUserMessage = messagingHeader.userMessages == null || messagingHeader.userMessages.isEmpty()
+        val isUserMessage = messagingHeader.userMessages?.isNotEmpty() == true
 
         val action = if (isUserMessage) {
             "FormidleDigitalPost"
@@ -177,67 +177,73 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
             )
         }
 
+        val previousMessageInfo = if (isUserMessage) {
+            messagingHeader.userMessages.first().messageInfo
+        } else {
+            messagingHeader.signalMessages.first().messageInfo
+        }
+
+        val newMsgInfo = MessageInfo(ZonedDateTime.now(), UUID.randomUUID().toString(), previousMessageInfo.messageId)
+        val soapBodyId = request.soapBody.getAttributeValue(wsuNamespace)
+
         return messageFactory.createMessage().apply {
             val messaging = Messaging().apply {
-                userMessages.add(UserMessage().apply {
-                    messageInfo = MessageInfo(ZonedDateTime.now(), "TODO", "TODOHEHE")
-                    collaborationInfo = CollaborationInfo(agreementRef, collaberatorService, action, "TODO:conversationid")
+                if (isUserMessage) {
+                    signalMessages.add(SignalMessage().apply {
+                        messageInfo = newMsgInfo
+                        receipt = Receipt().apply {
+                            val references = wsseResourceXPath.evaluate(wsseHeader, XPathConstants.NODESET) as NodeList
+                            val nonRepReferences = mutableListOf<Reference>()
+                            val attachmentContentIds = attachments.map { it.contentId }
+                            for (i in 0..(references.length-1)) {
+                                val uri = references.item(i).attributes.getNamedItem("URI").textContent
+                                if (uri in attachmentContentIds || uri == "#$soapBodyId") {
+                                    nonRepReferences.add(referenceUnmarshaller.unmarshal(references.item(i), Reference::class.java).value)
+                                }
+                            }
+                            anies.addAll(listOf(NonRepudiationInformation(
+                                    nonRepReferences.map { MessagePartNRInformation(it, null) }
+                            )))
+                        }
+                    })
+                } else {
+                    userMessages.add(UserMessage().apply {
+                        messageInfo = newMsgInfo
+                        collaborationInfo = CollaborationInfo(agreementRef, collaberatorService, action, "TODO:conversationid")
 
-                    partyInfo = sdpPartyInfo
-                    // TODO: this can be done better?
-                    payloadInfo = if (attachments.isEmpty()) {
-                        PayloadInfo(listOf(PartInfo()))
-                    } else {
-                        PayloadInfo(attachments.map { attachment ->
+                        partyInfo = sdpPartyInfo
+                        payloadInfo = PayloadInfo(attachments.map { attachment ->
                             PartInfo(null, null, PartProperties(attachment.mimeHeaders.map { Property(it.value, it.name) }), attachment.contentId)
                         })
-                    }
-                })
-                signalMessages.add(SignalMessage().apply {
-                    messageInfo = MessageInfo().apply {
-                        timestamp = ZonedDateTime.now()
-                        messageId = "TODO:Which message id?"
-                        refToMessageId = "TODO: Is this the message id the client sent?"
-                    }
-                    receipt = Receipt().apply {
-                        anies.addAll(listOf(
-                                NonRepudiationInformation(listOf(*attachments.map { attachment ->
-                                    MessagePartNRInformation().apply {
-                                        // TODO: Solve this in a less horrible way, we need namespaces to process this xpath, see https://stackoverflow.com/questions/13702637/xpath-with-namespace-in-java for info
-                                        // //*[@URI='$href']
-                                        // //*[local-name()='Reference']
-                                        val referenceElements = XPathFactory.newInstance().newXPath().evaluate(".//*[@URI='${attachment.contentId}']", wsseHeader, XPathConstants.NODESET) as NodeList
-                                        reference = referenceUnmarshaller.unmarshal(referenceElements.item(0), Reference::class.java).value
-                                    }
-                                }.toTypedArray(), MessagePartNRInformation().apply {
-                                    // TODO: Try to extract the actual ID for the SOAP body
-                                    val referenceElements = XPathFactory.newInstance().newXPath().evaluate(".//*[@URI='#soapBody']", wsseHeader, XPathConstants.NODESET) as NodeList
-                                    reference = referenceUnmarshaller.unmarshal(referenceElements.item(0), Reference::class.java).value
-                                }))))
-                    }
-                })
+                        if (payloadInfo.partInfos.isEmpty()) {
+                            payloadInfo.partInfos = listOf(PartInfo())
+                        }
+                    })
+                }
             }
 
             messagingMarshaller.marshal(messaging, soapHeader)
             val bodyMarshaller = JAXBContext.newInstance(StandardBusinessDocument::class.java, SDPMelding::class.java).createMarshaller()
-            val sbd = StandardBusinessDocument().apply {
-                standardBusinessDocumentHeader = StandardBusinessDocumentHeader().apply {
-                    headerVersion = "1.0"
-                    senders.add(Partner(PartnerIdentification("TODO:orgnr", "iso6523-actorid-upis"), mutableListOf()))
-                    receivers.add(Partner(PartnerIdentification("TODO:orgnr", "iso6523-actorid-upis"), mutableListOf()))
-                    documentIdentification = DocumentIdentification("urn:no:difi:sdp:1.0", "1.0", "TODO:InstanceIdentifier", "digitalPost", null, ZonedDateTime.now())
-                    businessScope = BusinessScope(listOf(Scope("ConversationId", "TODO:ConversationId", "urn:no:difi:sdp:1.0", listOf())))
-                }
-
-                if (isUserMessage) {
-                    sbdHandler.handleSignalMessage(this, messagingHeader.signalMessages.first())
-                } else {
+            val sbd = if (isUserMessage) {
+                StandardBusinessDocument().apply {
                     sbdHandler.handleUserMessage(this, messagingHeader.userMessages.first())
                 }
+            } else {
+                StandardBusinessDocument().apply {
+                    standardBusinessDocumentHeader = StandardBusinessDocumentHeader().apply {
+                        headerVersion = "1.0"
+                        senders.add(Partner(PartnerIdentification(meldingsformidlerOrgNr, "iso6523-actorid-upis"), mutableListOf()))
+                        receivers.add(Partner(PartnerIdentification("TODO:orgnr", "iso6523-actorid-upis"), mutableListOf()))
+                        documentIdentification = DocumentIdentification("urn:no:difi:sdp:1.0", "1.0", "TODO:InstanceIdentifier", "digitalPost", null, ZonedDateTime.now())
+                        businessScope = BusinessScope(listOf(Scope("ConversationId", "TODO:ConversationId", "urn:no:difi:sdp:1.0", listOf())))
+                    }
 
-                if (any != null) {
-                    signSdpPayload(any as SDPMelding)
+                    sbdHandler.handleSignalMessage(this, messagingHeader.signalMessages.first())
                 }
+            }
+
+            if (sbd.any != null && sbd.any is SDPMelding) {
+                signSdpPayload(sbd.any as SDPMelding)
             }
 
             bodyMarshaller.marshal(sbd, soapBody)
@@ -263,9 +269,7 @@ class Soap(val sbdHandler: SbdHandler) : Provider<SOAPMessage> {
 }
 
 fun <T: Any?> Iterator<T>.toList(): List<T> = mutableListOf<T>().apply {
-    while (hasNext()) {
-        add(next())
-    }
+    while (hasNext()) { add(next()) }
 }
 
 fun main(args: Array<String>) {
