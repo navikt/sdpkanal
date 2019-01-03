@@ -1,4 +1,4 @@
-FROM navikt/java:8
+FROM navikt/java:11
 
 ENV NO_NAV_SDPKANAL_DOKUMENT_PATH_PREFIX='/q1/dokumentdistribusjon/documentFileshare/'
 ENV NO_NAV_SDPKANAL_KEYSTORE=/var/run/secrets/nais.io/vault/virksomhet.jks.b64
