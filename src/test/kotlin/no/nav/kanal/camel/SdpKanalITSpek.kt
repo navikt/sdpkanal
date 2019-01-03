@@ -23,6 +23,7 @@ import no.nav.kanal.route.createSendRoute
 import org.amshove.kluent.any
 import org.amshove.kluent.mock
 import org.amshove.kluent.shouldBeInstanceOf
+import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
 import org.apache.activemq.artemis.core.server.ActiveMQServers
@@ -189,7 +190,6 @@ object SdpKanalITSpek : Spek({
     describe("Sending messages on the input queue") {
         it("Should result in the message dispatcher receiving the message") {
             inputQueueSender.send(session.createTextMessage(messageBytes.toString(Charsets.UTF_8)))
-            requestHandler.receipts.add(DefaultSbdHandler.defaultReceipt(UUID.randomUUID().toString()))
             verify(requestHandler, timeout(20000).times(1)).handleUserMessage(any(), any(), any(), any())
         }
     }
@@ -212,6 +212,7 @@ object SdpKanalITSpek : Spek({
             val sbd = sbdUnmarshaller.unmarshal(StringReader(receipt)) as StandardBusinessDocument
             sbd.any shouldNotEqual null
             sbd.any shouldBeInstanceOf SDPKvittering::class
+            sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier shouldEqual messageId
             println("Received receipt $receipt")
         }
     }
