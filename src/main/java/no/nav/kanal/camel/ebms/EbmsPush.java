@@ -5,9 +5,7 @@ import java.net.UnknownHostException;
 
 import javax.xml.ws.soap.SOAPFaultException;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import no.difi.begrep.sdp.schema_v10.SDPDigitalPost;
-import no.difi.begrep.sdp.schema_v10.SDPMelding;
 import no.digipost.api.MessageSender;
 import no.digipost.api.PMode;
 import no.digipost.api.representations.*;
@@ -25,6 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument;
+
+import static net.logstash.logback.argument.StructuredArguments.keyValue;
 
 public class EbmsPush implements Processor {
 
@@ -83,8 +83,8 @@ public class EbmsPush implements Processor {
 			}
 		}
 
-		System.out.println(reply.messageId);
-		System.out.println(new ObjectMapper().writeValueAsString(reply));
+		log.info("Message sent");
+		log.info("Message pushed, {}, {}", keyValue("callId", reply.messageId), keyValue("incomingMsgId", reply.messageId));
 		//handleResponse(reply, exchangeIn);
     }
 

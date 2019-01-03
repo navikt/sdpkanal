@@ -15,6 +15,6 @@ object EbmsNamespaceContext : NamespaceContext {
         else -> null
     }
 
-    override fun getPrefixes(namespaceURI: String?): MutableIterator<Any?> = mutableListOf(getPrefix(namespaceURI)).iterator()
+    override fun getPrefixes(namespaceURI: String?): MutableIterator<String?> = mutableListOf(getPrefix(namespaceURI)).iterator()
 
 }

@@ -1,6 +1,8 @@
 package no.nav.kanal.camel
 
+import org.bouncycastle.asn1.ASN1ObjectIdentifier
 import org.bouncycastle.asn1.x500.X500Name
+import org.bouncycastle.asn1.x509.BasicConstraints
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo
 import org.bouncycastle.cert.X509v3CertificateBuilder
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -55,7 +57,9 @@ fun generateKeysFor(orgNr: Long, alias: String, orgName: String, keystore: KeySt
     val digAlgId = DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId)
     val privateKeyAsymKeyParam = PrivateKeyFactory.createKey(privateKey.encoded)
     val sigGen = BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(privateKeyAsymKeyParam)
-    val certificateHolder = X509v3CertificateBuilder(dn, BigInteger.valueOf(orgNr), validFrom, validTo, dn, subjPubKeyInfo).build(sigGen)
+    val certificateHolder = X509v3CertificateBuilder(dn, BigInteger.valueOf(orgNr), validFrom, validTo, dn, subjPubKeyInfo)
+            .addExtension(ASN1ObjectIdentifier("2.5.29.19"), true, BasicConstraints(true))
+            .build(sigGen)
     val certificate = JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateHolder)
     keystore.setKeyEntry(alias, privateKey, "changeit".toCharArray(), arrayOf(certificate))
 }

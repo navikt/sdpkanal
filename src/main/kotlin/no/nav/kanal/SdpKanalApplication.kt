@@ -17,6 +17,7 @@ import io.ktor.server.engine.embeddedServer
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.coroutines.runBlocking
+import no.difi.sdp.client2.domain.Avsender
 import no.digipost.api.representations.EbmsAktoer
 import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
@@ -49,11 +50,12 @@ import javax.jms.Session
 const val METRICS_NAMESPACE = "sdpkanal"
 val objectMapper: ObjectMapper = ObjectMapper().registerKotlinModule()
 
-fun main(args: Array<String>) {
-    val config = SdpConfiguration()
+val datahandler: EbmsAktoer = EbmsAktoer.avsender("889640782")
+val receiver: EbmsAktoer = EbmsAktoer.meldingsformidler("984661185")
 
-    val datahandler = EbmsAktoer.avsender("889640782")
-    val receiver = EbmsAktoer.meldingsformidler("984661185")
+fun main(args: Array<String>) {
+    System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl")
+    val config = SdpConfiguration()
 
     val vaultCredentials: VaultCredentials = objectMapper.readValue(File(config.credentialsPath))
 
@@ -96,6 +98,7 @@ fun main(args: Array<String>) {
         val inputQueuePriorityBackout = createJmsEndpoint(config.inputQueuePriorityBackout)
         val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
         val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
+        // TODO: Wire up backout queues for receipts
         val receiptNormalBackoutQueue = createJmsEndpoint(config.receiptQueueNormalBackout)
         val receiptPriorityBackoutQueue = createJmsEndpoint(config.receiptPriorityBackoutQueue)
 

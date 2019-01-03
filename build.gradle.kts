@@ -6,6 +6,7 @@ version = "1.3.0-SNAPSHOT"
 
 description = """Application for routing Secure Digital Post to DIFI"s message dispatcher"""
 
+val artemisVersion = "2.6.2"
 val atomikosVersion = "4.0.6"
 val camelVersion = "2.22.2"
 val commonsIOVersion = "2.6"
@@ -14,15 +15,16 @@ val jaxwsApiVersion = "2.1"
 val jacksonVersion = "2.9.7"
 val jschVersion = "0.1.54"
 val jtaApiVersion = "1.1"
-val kluentVersion = "1.42"
+val kluentVersion = "1.43"
 val konfigVersion = "1.6.10.0"
 val ktorVersion = "1.0.0"
 val logbackVersion = "1.2.3"
 val mqVersion = "9.1.0.0"
 val prometheusVersion = "0.5.0"
 val saajVersion = "1.5.0"
+//val sdpSharedVersion = "2.6"
 val spekVersion = "2.0.0-rc.1"
-val sdpClientVersion = "5.2.1"
+val sdpClientVersion = "5.3"
 val woodstoxVersion = "5.2.0"
 val xmlSecVersion = "2.1.2"
 
@@ -78,7 +80,11 @@ dependencies {
     //implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
     //    exclude(module = "jaxb2-basics-runtime")
+        exclude(module = "spring-security-core")
+        exclude(module = "wss4j-ws-security-dom")
+        exclude(module = "wss4j-ws-security-common")
     }
+    //implementation("no.digipost:sdp-api-client:$sdpSharedVersion")
     implementation("org.apache.santuario:xmlsec:$xmlSecVersion")
     //implementation("org.glassfish.jaxb:jaxb-runtime:$glassfishJaxbVersion")
     //implementation("org.jvnet.jaxb2_commons:jaxb2-basics-runtime:1.11.1") {
@@ -96,6 +102,11 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.natpryce:konfig:$konfigVersion")
+    implementation("org.springframework.security:spring-security-core:4.1.0.RELEASE")
+    implementation("net.logstash.logback:logstash-logback-encoder:5.2")
+    implementation("javax.xml.soap:javax.xml.soap-api:1.4.0")
+    implementation("javax.xml.ws:jaxws-api:2.3.1")
+    implementation("javax.jws:jsr181-api:1.0-MR1")
 
     // Testing
     testImplementation("org.amshove.kluent:kluent:$kluentVersion")
@@ -103,7 +114,13 @@ dependencies {
     testRuntimeOnly("org.spekframework.spek2:spek-runtime-jvm:$spekVersion")
     testRuntimeOnly("org.spekframework.spek2:spek-runner-junit5:$spekVersion")
 
-    testImplementation("org.apache.cxf:cxf-rt-frontend-jaxws:3.2.7")
-    testImplementation("org.apache.cxf:cxf-rt-transports-http-jetty:3.2.7")
-    testImplementation("org.apache.cxf:cxf-rt-ws-security:3.2.7")
+    testImplementation("org.apache.cxf:cxf-rt-frontend-jaxws:3.1.17")
+    testImplementation("org.apache.cxf:cxf-rt-transports-http-jetty:3.1.17")
+    testImplementation("org.apache.cxf:cxf-rt-ws-security:3.1.17")
+    testImplementation("org.apache.cxf:cxf-rt-features-logging:3.1.17")
+
+    testImplementation("org.apache.activemq:artemis-server:$artemisVersion")
+    testImplementation("org.apache.activemq:artemis-jms-client:$artemisVersion")
+    testImplementation("org.apache.wss4j:wss4j-ws-security-dom:2.1.8")
+    testImplementation("org.apache.wss4j:wss4j-ws-security-common:2.1.8")
 }
