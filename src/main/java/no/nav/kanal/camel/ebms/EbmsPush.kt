@@ -24,6 +24,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import net.logstash.logback.argument.StructuredArguments.keyValue
+import no.nav.kanal.camel.header
 
 
 class EbmsPush(
@@ -74,8 +75,8 @@ class EbmsPush(
 
         val messageId = sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier
         val action = if (sdpMelding.digitalPostInfo == null) PMode.Action.FORMIDLE_FYSISK else PMode.Action.FORMIDLE_DIGITAL
-        val mpcId = exchangeIn.getIn().getHeader(MPC_ID, String::class.java)
-        val priority = EbmsOutgoingMessage.Prioritet.NORMAL // TODO
+        val mpcId = exchangeIn.getIn().getHeader(MPC_ID_HEADER, String::class.java)
+        val priority = exchangeIn.getIn().header<EbmsOutgoingMessage.Prioritet>(PRIORITY_HEADER)
         return ebmsSender.send(datahandler, receiver, sbd, documentPackage, priority, mpcId, messageId, action)
     }
 

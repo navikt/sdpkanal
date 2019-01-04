@@ -8,14 +8,15 @@ import no.digipost.api.representations.EbmsAktoer
 import java.net.URI
 
 
-const val MPC_ID: String = "MPC_ID"
+const val MPC_ID_HEADER: String = "MPC_ID"
+const val PRIORITY_HEADER: String = "PRIORITY"
 
 fun createMessageSender(
-        databehandler: EbmsAktoer,
-        mottaker: EbmsAktoer,
-        sdpKeys: SdpKeys,
-        credentials: VaultCredentials,
-        ebmsEndpoint: String
+    databehandler: EbmsAktoer,
+    mottaker: EbmsAktoer,
+    sdpKeys: SdpKeys,
+    credentials: VaultCredentials,
+    ebmsEndpoint: String
 ): MessageSender {
     val keystoreInfo = KeyStoreInfo(sdpKeys.keystore, sdpKeys.truststore, credentials.virksomhetKeystoreAlias, credentials.virksomhetKeystorePassword)
     val endpoint = EbmsEndpointUriBuilder.statiskUri(URI(ebmsEndpoint))

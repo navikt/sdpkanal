@@ -1,11 +1,13 @@
 package no.nav.kanal.route
 
+import no.digipost.api.representations.EbmsOutgoingMessage
 import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.XmlExtractor
 import no.nav.kanal.camel.ebms.EbmsPush
-import no.nav.kanal.config.MPC_ID
+import no.nav.kanal.config.MPC_ID_HEADER
+import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
 import org.apache.camel.LoggingLevel
 import org.apache.camel.builder.RouteBuilder
@@ -32,6 +34,7 @@ fun CamelContext.createDeadLetterRoute(
 fun CamelContext.createSendRoute(
         routeName: String,
         mpcId: String,
+        priority: EbmsOutgoingMessage.Prioritet,
         inputQueue: JmsEndpoint,
         backoutRoute: String,
         xmlExtractor: XmlExtractor,
@@ -42,7 +45,8 @@ fun CamelContext.createSendRoute(
         // @formatter:off
         from(inputQueue)
                 .id(routeName)
-                .setHeader(MPC_ID) { mpcId }
+                .setHeader(PRIORITY_HEADER) { priority }
+                .setHeader(MPC_ID_HEADER) { mpcId }
                 .onException(Exception::class.java).handled(true).to("direct:$backoutRoute")
                 .end()
                 .process(xmlExtractor)

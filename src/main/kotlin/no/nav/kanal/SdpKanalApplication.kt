@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.jcraft.jsch.ChannelSftp
-import com.jcraft.jsch.HostKey
 import com.jcraft.jsch.JSch
 import io.ktor.application.call
 import io.ktor.http.ContentType
@@ -17,8 +16,8 @@ import io.ktor.server.engine.embeddedServer
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.coroutines.runBlocking
-import no.difi.sdp.client2.domain.Avsender
 import no.digipost.api.representations.EbmsAktoer
+import no.digipost.api.representations.EbmsOutgoingMessage
 import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
@@ -31,6 +30,7 @@ import no.nav.kanal.config.VaultCredentials
 import no.nav.kanal.config.createConnectionFactory
 import no.nav.kanal.config.createJmsConfig
 import no.nav.kanal.config.createMessageSender
+import no.nav.kanal.log.LegalArchiveLogger
 import no.nav.kanal.log.LegalArchiveStub
 import no.nav.kanal.route.createDeadLetterRoute
 import no.nav.kanal.route.createReceiptPollingRoute
@@ -38,12 +38,9 @@ import no.nav.kanal.route.createSendRoute
 import org.apache.camel.component.jms.JmsEndpoint
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.DefaultShutdownStrategy
-import org.apache.commons.io.IOUtils
 import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
-import java.util.Base64
 import java.util.concurrent.TimeUnit
+import javax.jms.ConnectionFactory
 import javax.jms.Session
 
 
@@ -52,6 +49,58 @@ val objectMapper: ObjectMapper = ObjectMapper().registerKotlinModule()
 
 val datahandler: EbmsAktoer = EbmsAktoer.avsender("889640782")
 val receiver: EbmsAktoer = EbmsAktoer.meldingsformidler("984661185")
+
+fun createCamelContext(
+        config: SdpConfiguration,
+        vaultCredentials: VaultCredentials,
+        sdpKeys: SdpKeys,
+        mqConnection: ConnectionFactory,
+        sftpChannel: ChannelSftp,
+        legalArchive: LegalArchiveLogger
+): DefaultCamelContext = DefaultCamelContext().apply {
+    val jmsConfig = createJmsConfig(mqConnection, config.mqConcurrentConsumers)
+    val session = mqConnection.createConnection().apply {
+        start()
+    }.createSession(false, Session.AUTO_ACKNOWLEDGE)
+
+    isAllowUseOriginalMessage = true
+    fun createJmsEndpoint(queueName: String): JmsEndpoint {
+        val endpoint = JmsEndpoint.newInstance(session.createQueue(queueName))
+        // TODO: endpoint.transactionManager = transactionManager
+        endpoint.configuration = jmsConfig
+        endpoint.camelContext = this
+        return endpoint
+    }
+
+    val inputQueueNormal = createJmsEndpoint(config.inputQueueNormal)
+    val inputQueuePriority = createJmsEndpoint(config.inputQueuePriority)
+    val inputQueueNormalBackout = createJmsEndpoint(config.inputQueueNormalBackout)
+    val inputQueuePriorityBackout = createJmsEndpoint(config.inputQueuePriorityBackout)
+    val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
+    val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
+    // TODO: Wire up backout queues for receipts
+    val receiptNormalBackoutQueue = createJmsEndpoint(config.receiptQueueNormalBackout)
+    val receiptPriorityBackoutQueue = createJmsEndpoint(config.receiptPriorityBackoutQueue)
+
+    val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
+    val ebmsPull = EbmsPull(messageSender, receiver)
+    val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, legalArchive, messageSender, datahandler, receiver)
+    val boqLogger = BOQLogger(legalArchive)
+    val backoutReason = BackoutReason()
+    val xmlExtractor = XmlExtractor()
+    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
+
+    shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = 20 }
+    disableJMX()
+    addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptQueueNormal))
+    addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalNormal, ebmsPull, receiptQueuePriority))
+
+    addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, boqLogger, backoutReason))
+    addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, boqLogger, backoutReason))
+
+    addRoutes(createSendRoute("sendSDPNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", xmlExtractor, documentPackageCreator, ebmsPush))
+    addRoutes(createSendRoute("sendSDPPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", xmlExtractor, documentPackageCreator, ebmsPush))
+}
 
 fun main(args: Array<String>) {
     System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl")
@@ -62,7 +111,6 @@ fun main(args: Array<String>) {
     val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
 
     val mqConnection = createConnectionFactory(config.mqHostname, config.mqPort, config.mqQueueManager, config.mqChannel, vaultCredentials)
-    val jmsConfig = createJmsConfig(mqConnection, config.mqConcurrentConsumers)
 
     val jschSession = JSch().apply {
         addIdentity(config.sftpKeyPath, vaultCredentials.sftpKeyPassword)
@@ -72,48 +120,7 @@ fun main(args: Array<String>) {
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
     sftpChannel.connect()
 
-    val session = mqConnection.createConnection().createSession(false, Session.AUTO_ACKNOWLEDGE)
-
-    val legalArhive = LegalArchiveStub()
-    val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
-    val ebmsPull = EbmsPull(messageSender, receiver)
-    val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, legalArhive, messageSender, datahandler, receiver)
-    val boqLogger = BOQLogger(legalArhive)
-    val backoutReason = BackoutReason()
-    val xmlExtractor = XmlExtractor()
-    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
-
-    val camelContext = DefaultCamelContext().apply {
-        isAllowUseOriginalMessage = true
-        fun createJmsEndpoint(queueName: String): JmsEndpoint {
-            val endpoint = JmsEndpoint.newInstance(session.createQueue(queueName))
-            // TODO: endpoint.transactionManager = transactionManager
-            endpoint.configuration = jmsConfig
-            endpoint.camelContext = this
-            return endpoint
-        }
-
-        val inputQueueNormal = createJmsEndpoint(config.inputQueueNormal)
-        val inputQueuePriority = createJmsEndpoint(config.inputQueuePriority)
-        val inputQueueNormalBackout = createJmsEndpoint(config.inputQueueNormalBackout)
-        val inputQueuePriorityBackout = createJmsEndpoint(config.inputQueuePriorityBackout)
-        val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
-        val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
-        // TODO: Wire up backout queues for receipts
-        val receiptNormalBackoutQueue = createJmsEndpoint(config.receiptQueueNormalBackout)
-        val receiptPriorityBackoutQueue = createJmsEndpoint(config.receiptPriorityBackoutQueue)
-
-        shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = 20 }
-        disableJMX()
-        addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, config.receiptPollIntervalNormal, ebmsPull, receiptQueuePriority))
-        addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, config.receiptPollIntervalNormal, ebmsPull, receiptQueueNormal))
-
-        addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, boqLogger, backoutReason))
-        addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, boqLogger, backoutReason))
-
-        addRoutes(createSendRoute("sendSDPNormal", config.mpcNormal, inputQueueNormal, "backoutMessageNormal", xmlExtractor, documentPackageCreator, ebmsPush))
-        addRoutes(createSendRoute("sendSDPPriority", config.mpcPrioritert, inputQueuePriority, "backoutMessagePriority", xmlExtractor, documentPackageCreator, ebmsPush))
-    }
+    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, mqConnection, sftpChannel, LegalArchiveStub()) // TODO: Wire up legal archive
     camelContext.start()
 
     runBlocking {
