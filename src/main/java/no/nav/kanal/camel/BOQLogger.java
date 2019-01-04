@@ -12,7 +12,10 @@ public class BOQLogger implements Processor  {
 	
 	private static Logger log = LoggerFactory.getLogger(BOQLogger.class);
 	
-	private LegalArchiveLogger legalArchive = null;
+	private final LegalArchiveLogger legalArchive;
+	public BOQLogger(LegalArchiveLogger legalArchive) {
+		this.legalArchive = legalArchive;
+	}
 	
 	@Override
 	public void process(Exchange exchange) throws Exception {
@@ -30,9 +33,4 @@ public class BOQLogger implements Processor  {
 		legalArchive.logEvent(exchange, LogEvent.MELDING_SKAL_SENDES_TIL_BOQ, e.getMessage() + cause);
 		log.debug("Logged event for sending message to BOQ");
 	}
-	
-	public void setLegalArchive(LegalArchiveLogger legalArchive) {
-		this.legalArchive = legalArchive;
-	}
-	
 }

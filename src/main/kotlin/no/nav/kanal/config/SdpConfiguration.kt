@@ -15,10 +15,10 @@ import java.util.Properties
 
 val config = systemProperties() overriding
         EnvironmentVariables() overriding
-        ConfigurationProperties.fromResourceAsStream("application.properties")
+        ConfigurationProperties.fromResourceAsStream("/application.properties")
 
 private fun ConfigurationProperties.Companion.fromResourceAsStream(resourceName: String): ConfigurationProperties {
-    val input = this::class.java.classLoader.getResourceAsStream(resourceName)
+    val input = SdpConfiguration::class.java.getResourceAsStream(resourceName)
     return (input ?: throw Misconfiguration("resource $resourceName not found")).use {
         ConfigurationProperties(Properties().apply { load(input) })
     }

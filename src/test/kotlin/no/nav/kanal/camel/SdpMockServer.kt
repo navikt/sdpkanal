@@ -53,9 +53,8 @@ import org.w3c.dom.Element
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.FileOutputStream
+import java.io.StringWriter
 import java.net.URI
-import java.nio.file.Files
-import java.nio.file.Paths
 import java.security.KeyStore
 import java.time.ZonedDateTime
 import java.util.Properties
@@ -78,6 +77,9 @@ import javax.xml.soap.MessageFactory
 import javax.xml.soap.MimeHeader
 import javax.xml.soap.SOAPConstants
 import javax.xml.soap.SOAPMessage
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
 import javax.xml.ws.BindingType
 import javax.xml.ws.Provider
 import javax.xml.ws.ServiceMode
@@ -97,10 +99,9 @@ private val agreementRef: AgreementRef = AgreementRef(agreementUrl,  null, "nav-
 private val collaberatorService: Service = Service("SDP", null)
 private val sdpFrom = From(listOf(PartyId(meldingsformidlerOrgNr, orgNrPartyType)), "urn:sdp:meldingsformidler")
 
-private val referenceUnmarshaller: Unmarshaller = JAXBContext.newInstance(Reference::class.java).createUnmarshaller()
 val messagingNamespace = QName("http://docs.oasis-open.org/ebxml-msg/ebms/v3.0/ns/core/200704/", "Messaging")
 // Not sure about localName
-val wsuNamespace = QName("z://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", "Id")
+val wsuNamespace = QName("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd", "Id")
 val ebmsXpath: XPath = XPathFactory.newInstance().newXPath().apply {
     namespaceContext = EbmsNamespaceContext
 }
@@ -163,20 +164,21 @@ object DefaultSbdHandler : SbdHandler {
 )
 @ServiceMode(value = WSService.Mode.MESSAGE)
 class Soap(private val sbdHandler: SbdHandler, val keystore: KeyStore) : Provider<SOAPMessage> {
+    private val sbdContext = JAXBContext.newInstance(StandardBusinessDocument::class.java, SDPMelding::class.java)
+    private val messagingContext: JAXBContext = JAXBContext.newInstance(Messaging::class.java, NonRepudiationInformation::class.java)
 
     private val signatureKey = keystore.getKey("posten", "changeit".toCharArray())
 
     override fun invoke(request: SOAPMessage): SOAPMessage {
-        // TODO: Move back up
+        val referenceUnmarshaller: Unmarshaller = JAXBContext.newInstance(Reference::class.java).createUnmarshaller()
         val messageFactory: MessageFactory = MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL)
         // private val documentBuilder: DocumentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder()
         // private val sdpMessageMarshaller: Marshaller = JAXBContext.newInstance(SDPMelding::class.java).createMarshaller()
-        val sbdContext = JAXBContext.newInstance(StandardBusinessDocument::class.java, SDPMelding::class.java)
+        // private val sdpMessageMarshaller: Marshaller = JAXBContext.newInstance(SDPMelding::class.java).createMarshaller()
         val bodyMarshaller: Marshaller = sbdContext.createMarshaller()
         val sbdUnmarshaller: Unmarshaller = sbdContext.createUnmarshaller()
 
 
-        val messagingContext: JAXBContext = JAXBContext.newInstance(Messaging::class.java, NonRepudiationInformation::class.java)
         val messagingUnmarshaller: Unmarshaller = messagingContext.createUnmarshaller()
         val messagingMarshaller: Marshaller = messagingContext.createMarshaller()
 
@@ -187,10 +189,9 @@ class Soap(private val sbdHandler: SbdHandler, val keystore: KeyStore) : Provide
         // If its a user message its most likely a distribution request
         val isUserMessage = messagingHeader.userMessages?.isNotEmpty() == true
 
-        val action = if (isUserMessage) {
-            "FormidleDigitalPost"
-        } else {
-            "KvitteringsForespoersel"
+        val action = when (isUserMessage) {
+            true -> "FormidleDigitalPost"
+            else -> "KvitteringsForespoersel"
         }
         val clientPublicKey = X509Security(wsseHeader.firstChild as Element, BSPEnforcer(true))
 
@@ -327,7 +328,7 @@ fun createSDPMockServer(sbdHandler: SbdHandler = DefaultSbdHandler, port: Int = 
     val sfb = JaxWsServerFactoryBean().apply {
         serviceBean = Soap(sbdHandler, keyStore)
         address = "http://localhost:$port/sdpmock"
-        features.add(LoggingFeature())
+        //features.add(LoggingFeature())
     }
     return SdpServer(sfb.create().apply {
         endpoint.apply {

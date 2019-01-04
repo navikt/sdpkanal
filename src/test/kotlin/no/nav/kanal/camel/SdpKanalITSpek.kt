@@ -2,9 +2,11 @@ package no.nav.kanal.camel
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jcraft.jsch.ChannelSftp
+import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.timeout
 import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
 import no.difi.begrep.sdp.schema_v10.SDPKvittering
 import no.difi.begrep.sdp.schema_v10.SDPMelding
 import no.nav.kanal.camel.ebms.EbmsPush
@@ -46,6 +48,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.jms.BytesMessage
 import javax.jms.ConnectionFactory
 import javax.jms.Session
+import javax.jms.TextMessage
 import javax.naming.InitialContext
 import javax.xml.bind.JAXBContext
 import kotlin.concurrent.write
@@ -56,11 +59,16 @@ val sdpMockPort: Int = ServerSocket(0).use {
 
 open class QueuedReceiptHandler : SbdHandler {
     val receipts: MutableList<EbmsResponse> = mutableListOf()
+    val userMessageHandlers = mutableListOf<()->EbmsResponse>()
     private val reentrantReadWriteLock: ReentrantReadWriteLock = ReentrantReadWriteLock()
 
     override fun handleUserMessage(sbdIn: StandardBusinessDocument, attachments: List<EbmsAttachment>, senderOrgNumber: String, userMessage: UserMessage): EbmsResponse {
         // Assume its a request to send SDP
-        return EbmsResponse(null, null, true, listOf())
+        if (userMessageHandlers.isEmpty())
+            return EbmsResponse(null, null, true, listOf())
+        return reentrantReadWriteLock.write {
+            userMessageHandlers.removeAt(0)()
+        }
     }
 
 
@@ -128,16 +136,17 @@ object SdpKanalITSpek : Spek({
 
     val jmsConfig = createJmsConfig(connectionFactory, config.mqConcurrentConsumers)
 
-    val boqLogger = BOQLogger()
+    val boqLogger = BOQLogger(legalArchive)
     val backoutReason = BackoutReason()
     val xmlExtractor = XmlExtractor()
 
-    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, "/tmp/documents")
+    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, "/tmp/documents/")
     val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
     val ebmsPull = EbmsPull(messageSender, receiver)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, legalArchive, messageSender, datahandler, receiver)
 
     val camelContext = DefaultCamelContext().apply {
+        isAllowUseOriginalMessage = true
         fun createJmsEndpoint(queueName: String): JmsEndpoint {
             val endpoint = JmsEndpoint.newInstance(session.createQueue(queueName))
             // TODO: endpoint.transactionManager = transactionManager
@@ -171,15 +180,16 @@ object SdpKanalITSpek : Spek({
 
     val inputQueueSender = session.createProducer(session.createQueue(config.inputQueueNormal))
     val receiptConsumer = session.createConsumer(session.createQueue(config.receiptQueueNormal))
+    val backoutConsumer = session.createConsumer(session.createQueue(config.inputQueueNormalBackout))
     val messageBytes = IOUtils.toByteArray(SdpKanalITSpek::class.java.getResourceAsStream("/payloads/inline.xml"))
 
+    afterEachTest {
+        reset(requestHandler)
+    }
+
     afterGroup {
-        //camelContext.shutdownStrategy.timeout = 1
-        //camelContext.shutdownStrategy.timeUnit = TimeUnit.MILLISECONDS
-        //camelContext.shutdownStrategy.isShutdownNowOnTimeout = true
         camelContext.shutdown()
         queueConnection.close()
-        //sdpServer.stop()
         sdpServer.server.stop()
         sdpServer.server.destroy()
         sdpServer.sfb.bus.shutdown(true)
@@ -188,19 +198,19 @@ object SdpKanalITSpek : Spek({
     }
 
     describe("Sending messages on the input queue") {
-        it("Should result in the message dispatcher receiving the message") {
+        it("Results in the message dispatcher receiving the message") {
             inputQueueSender.send(session.createTextMessage(messageBytes.toString(Charsets.UTF_8)))
             verify(requestHandler, timeout(20000).times(1)).handleUserMessage(any(), any(), any(), any())
         }
     }
 
     describe("Returning a receipt from the message dispatcher") {
-        it ("Should result in a receipt on the receipt queue") {
+        it ("Results in a receipt on the receipt queue") {
             val messageId = UUID.randomUUID().toString()
             println("UUID used for messageId $messageId")
             requestHandler.receipts.add(DefaultSbdHandler.defaultReceipt(messageId))
 
-            val message = receiptConsumer.receive(60000)
+            val message = receiptConsumer.receive(10000)
             message shouldBeInstanceOf BytesMessage::class
             message as BytesMessage
             val bytes = ByteArray(message.bodyLength.toInt())
@@ -214,6 +224,20 @@ object SdpKanalITSpek : Spek({
             sbd.any shouldBeInstanceOf SDPKvittering::class
             sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier shouldEqual messageId
             println("Received receipt $receipt")
+        }
+    }
+
+    describe("SOAP fault from the message dispatcher") {
+        it("Results in the message ending up on the backout queue") {
+            inputQueueSender.send(session.createTextMessage(messageBytes.toString(Charsets.UTF_8)))
+            requestHandler.userMessageHandlers.add {
+                throw RuntimeException("Integration test")
+            }
+
+            val message = backoutConsumer.receive(10000)
+            message shouldBeInstanceOf TextMessage::class
+            message as TextMessage
+            message.text shouldEqual messageBytes.toString(Charsets.UTF_8)
         }
     }
 })

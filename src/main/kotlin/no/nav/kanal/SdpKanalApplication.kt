@@ -78,12 +78,13 @@ fun main(args: Array<String>) {
     val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
     val ebmsPull = EbmsPull(messageSender, receiver)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, legalArhive, messageSender, datahandler, receiver)
-    val boqLogger = BOQLogger()
+    val boqLogger = BOQLogger(legalArhive)
     val backoutReason = BackoutReason()
     val xmlExtractor = XmlExtractor()
     val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
 
     val camelContext = DefaultCamelContext().apply {
+        isAllowUseOriginalMessage = true
         fun createJmsEndpoint(queueName: String): JmsEndpoint {
             val endpoint = JmsEndpoint.newInstance(session.createQueue(queueName))
             // TODO: endpoint.transactionManager = transactionManager
