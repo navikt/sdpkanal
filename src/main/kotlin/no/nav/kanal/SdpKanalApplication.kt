@@ -23,7 +23,7 @@ import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.EbmsPull
 import no.nav.kanal.camel.XmlExtractor
-import no.nav.kanal.camel.ebms.EbmsPush
+import no.nav.kanal.camel.EbmsPush
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials

@@ -1,4 +1,4 @@
-package no.nav.kanal.camel.ebms
+package no.nav.kanal.camel
 
 import java.net.ConnectException
 import java.net.UnknownHostException
@@ -10,8 +10,6 @@ import no.digipost.api.MessageSender
 import no.digipost.api.PMode
 import no.digipost.api.representations.*
 import no.nav.kanal.SdpPayload
-import no.nav.kanal.camel.DocumentPackageCreator
-import no.nav.kanal.camel.XmlExtractor
 import no.nav.kanal.config.*
 import no.nav.kanal.ebms.EbmsSender
 import no.nav.kanal.log.LegalArchiveLogger
@@ -24,7 +22,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
 import net.logstash.logback.argument.StructuredArguments.keyValue
-import no.nav.kanal.camel.header
 
 
 class EbmsPush(
@@ -47,6 +44,9 @@ class EbmsPush(
                 exchangeIn.`in`.body = reply
                 log.info("Message pushed, {}, {}", keyValue("callId", reply.messageId), keyValue("incomingMsgId", reply.messageId))
                 return
+            } catch (e: Exception) {
+                log.error("Caught exception while trying to push message", e)
+                throw e
             } catch (e: SOAPFaultException) {
                 log.error("Error during transmit", e.message)
                 legalArchive.logEvent(exchangeIn, LogEvent.MELDING_SENDT_TIL_DIFI_FEILET, ". Retry number $retryNumber. Error: ${e.cause}")

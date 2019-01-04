@@ -5,7 +5,7 @@ import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.XmlExtractor
-import no.nav.kanal.camel.ebms.EbmsPush
+import no.nav.kanal.camel.EbmsPush
 import no.nav.kanal.config.MPC_ID_HEADER
 import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
