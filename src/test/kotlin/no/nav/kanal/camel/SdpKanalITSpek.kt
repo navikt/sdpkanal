@@ -122,7 +122,7 @@ object SdpKanalITSpek : Spek({
     val queueConnection = connectionFactory.createConnection()
     queueConnection.start()
 
-    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, connectionFactory, sftpChannel)
+    val camelContext = createCamelContext(config, sdpKeys, connectionFactory, sftpChannel)
     camelContext.start()
 
     val session = queueConnection.createSession()

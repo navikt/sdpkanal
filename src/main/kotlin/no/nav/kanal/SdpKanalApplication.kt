@@ -16,6 +16,7 @@ import io.ktor.server.engine.embeddedServer
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.coroutines.runBlocking
+import no.digipost.api.EbmsEndpointUriBuilder
 import no.digipost.api.representations.EbmsAktoer
 import no.digipost.api.representations.EbmsOutgoingMessage
 import no.nav.kanal.camel.BackoutReason
@@ -27,7 +28,7 @@ import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
 import no.nav.kanal.config.createConnectionFactory
 import no.nav.kanal.config.createJmsConfig
-import no.nav.kanal.config.createMessageSender
+import no.nav.kanal.ebms.EbmsSender
 import no.nav.kanal.route.createDeadLetterRoute
 import no.nav.kanal.route.createReceiptPollingRoute
 import no.nav.kanal.route.createSendRoute
@@ -35,6 +36,7 @@ import org.apache.camel.component.jms.JmsEndpoint
 import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.DefaultShutdownStrategy
 import java.io.File
+import java.net.URI
 import java.util.concurrent.TimeUnit
 import javax.jms.ConnectionFactory
 import javax.jms.Session
@@ -48,7 +50,6 @@ val receiver: EbmsAktoer = EbmsAktoer.meldingsformidler("984661185")
 
 fun createCamelContext(
         config: SdpConfiguration,
-        vaultCredentials: VaultCredentials,
         sdpKeys: SdpKeys,
         mqConnection: ConnectionFactory,
         sftpChannel: ChannelSftp
@@ -74,9 +75,9 @@ fun createCamelContext(
     val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
     val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
 
-    val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
-    val ebmsPull = EbmsPull(messageSender, receiver)
-    val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, messageSender, datahandler, receiver)
+    val ebmsSender = EbmsSender(EbmsEndpointUriBuilder.statiskUri(URI(config.ebmsEndpointUrl)), sdpKeys, receiver)
+    val ebmsPull = EbmsPull(receiver, ebmsSender)
+    val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, datahandler, receiver, ebmsSender)
     val backoutReason = BackoutReason()
     val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
 
@@ -110,7 +111,7 @@ fun main(args: Array<String>) {
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
     sftpChannel.connect()
 
-    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, mqConnection, sftpChannel)
+    val camelContext = createCamelContext(config, sdpKeys, mqConnection, sftpChannel)
     camelContext.start()
 
     runBlocking {

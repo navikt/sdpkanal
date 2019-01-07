@@ -6,7 +6,6 @@ import java.net.UnknownHostException
 import javax.xml.ws.soap.SOAPFaultException
 
 import no.difi.begrep.sdp.schema_v10.SDPDigitalPost
-import no.digipost.api.MessageSender
 import no.digipost.api.PMode
 import no.digipost.api.representations.*
 import no.nav.kanal.SdpPayload
@@ -19,16 +18,12 @@ import org.apache.camel.RuntimeCamelException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
-import net.logstash.logback.argument.StructuredArguments.keyValue
-
-
 class EbmsPush(
     private val maxRetries: Long,
     private val retryInterval: Long,
-    messageSender: MessageSender,
     private val datahandler: EbmsAktoer,
     private val receiver: EbmsAktoer,
-    private val ebmsSender: EbmsSender = EbmsSender.fromMessageSender(messageSender)
+    private val ebmsSender: EbmsSender
 ) : Processor {
     private val log: Logger = LoggerFactory.getLogger(EbmsPush::class.java)
 
@@ -67,7 +62,6 @@ class EbmsPush(
         }
     }
 
-
     private fun createAndSendMessage(exchangeIn: Exchange): TransportKvittering {
         val sbd = exchangeIn.getIn().getHeader(XmlExtractor.SDP_PAYLOAD, SdpPayload::class.java).standardBusinessDocument
 
@@ -82,7 +76,6 @@ class EbmsPush(
         val priority = exchangeIn.getIn().header<EbmsOutgoingMessage.Prioritet>(PRIORITY_HEADER)
         return ebmsSender.send(datahandler, receiver, sbd, documentPackage, priority, mpcId, messageId, conversationId, action)
     }
-
 
     private fun isConnectionProblem(e: Exception): Boolean {
         var cause = e.cause
