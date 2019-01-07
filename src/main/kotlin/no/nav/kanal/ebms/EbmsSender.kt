@@ -44,9 +44,10 @@ class EbmsSender(
         priority: EbmsOutgoingMessage.Prioritet,
         mpcId: String,
         messageId: String,
+        conversationId: String,
         action: PMode.Action
     ) : TransportKvittering {
-        val outgoing = EbmsOutgoingSender(signer, dataHandler, technicalReceiver, sbd, documentPackage, priority, mpcId, messageId, action, marshaller)
+        val outgoing = EbmsOutgoingSender(signer, dataHandler, technicalReceiver, sbd, documentPackage, priority, mpcId, messageId, conversationId, action, marshaller)
         return messageTemplate.sendAndReceive(uri.baseUri.toString(), outgoing, TransportKvitteringReceiver())
     }
 

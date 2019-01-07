@@ -5,7 +5,7 @@
     </appender>
 
     <logger name="no.nav.pale" level="INFO"/>
-    <logger name="mf.logger" level="WARNING" />
+    <logger name="mf.logger" level="WARN" />
 
     <root level="INFO">
         <appender-ref ref="stdout_json" />

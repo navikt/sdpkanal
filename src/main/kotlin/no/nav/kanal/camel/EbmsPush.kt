@@ -73,11 +73,12 @@ class EbmsPush(
 
         val sdpMelding = sbd.any as SDPDigitalPost
 
+        val conversationId = sbd.standardBusinessDocumentHeader.businessScope.scopes.first().instanceIdentifier
         val messageId = sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier
         val action = if (sdpMelding.digitalPostInfo == null) PMode.Action.FORMIDLE_FYSISK else PMode.Action.FORMIDLE_DIGITAL
         val mpcId = exchangeIn.getIn().getHeader(MPC_ID_HEADER, String::class.java)
         val priority = exchangeIn.getIn().header<EbmsOutgoingMessage.Prioritet>(PRIORITY_HEADER)
-        return ebmsSender.send(datahandler, receiver, sbd, documentPackage, priority, mpcId, messageId, action)
+        return ebmsSender.send(datahandler, receiver, sbd, documentPackage, priority, mpcId, messageId, conversationId, action)
     }
 
 

@@ -20,16 +20,17 @@ import java.util.UUID
 import javax.activation.DataHandler
 
 class EbmsOutgoingSender(
-    val signer: SdpMeldingSigner,
-    val dataHandler: EbmsAktoer,
-    val technicalReceiver: EbmsAktoer,
-    val sbd: StandardBusinessDocument,
-    val documentPackage: Dokumentpakke,
-    val priority: EbmsOutgoingMessage.Prioritet,
-    val mpcId: String,
-    val messageId: String,
-    val action: PMode.Action,
-    val marshaller: Jaxb2Marshaller
+    private val signer: SdpMeldingSigner,
+    private val dataHandler: EbmsAktoer,
+    private val technicalReceiver: EbmsAktoer,
+    private val sbd: StandardBusinessDocument,
+    private val documentPackage: Dokumentpakke,
+    private val priority: EbmsOutgoingMessage.Prioritet,
+    private val mpcId: String,
+    private val messageId: String,
+    private val conversationId: String,
+    private val action: PMode.Action,
+    private val marshaller: Jaxb2Marshaller
 ) : EbmsContextAware(), WebServiceMessageCallback {
     override fun doWithMessage(message: WebServiceMessage?) {
         message as SoapMessage
@@ -41,7 +42,15 @@ class EbmsOutgoingSender(
 
         val mpc = Mpc(priority, mpcId)
         signer.sign(sbd)
-        ebmsContext.addRequestStep(AddUserMessageStep(mpc, messageId, action, null, sbd, dataHandler, technicalReceiver, marshaller))
+        ebmsContext.addRequestStep(EbmsUserMessagingStep(
+                mpc = mpc,
+                messageId = messageId,
+                conversationId = conversationId,
+                action = action,
+                refToMessageId = null,
+                datahandler = dataHandler,
+                receiver = technicalReceiver,
+                marshaller = marshaller))
 
     }
 
