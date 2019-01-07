@@ -19,8 +19,8 @@ public class BOQLogger implements Processor  {
 	
 	@Override
 	public void process(Exchange exchange) throws Exception {
-
 		Exception e = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
+		log.error("Sending message to backout, exception caught was", e);
 		
 		String cause ="";
 		int causeNo = 1;
