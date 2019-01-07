@@ -44,10 +44,6 @@ fasitResources:
     resourceType: Queue
   - alias: SDP_KVITTERING_PRIORITERT
     resourceType: Queue
-  - alias: SDP_KVITTERING_STANDARD_BOQ
-    resourceType: Queue
-  - alias: SDP_KVITTERING_PRIORITERT_BOQ
-    resourceType: Queue
 #  - alias: sdpkanal_channel
 #    resourceType: Channel
   - alias: varseltjeneste_channel

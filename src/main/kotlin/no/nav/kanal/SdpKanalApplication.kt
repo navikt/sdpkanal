@@ -21,7 +21,6 @@ import no.digipost.api.representations.EbmsOutgoingMessage
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.EbmsPull
-import no.nav.kanal.camel.XmlExtractor
 import no.nav.kanal.camel.EbmsPush
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
@@ -74,9 +73,6 @@ fun createCamelContext(
     val inputQueuePriorityBackout = createJmsEndpoint(config.inputQueuePriorityBackout)
     val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
     val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
-    // TODO: Wire up backout queues for receipts
-    val receiptNormalBackoutQueue = createJmsEndpoint(config.receiptQueueNormalBackout)
-    val receiptPriorityBackoutQueue = createJmsEndpoint(config.receiptPriorityBackoutQueue)
 
     val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
     val ebmsPull = EbmsPull(messageSender, receiver)
@@ -114,7 +110,7 @@ fun main(args: Array<String>) {
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
     sftpChannel.connect()
 
-    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, mqConnection, sftpChannel) // TODO: Wire up legal archive
+    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, mqConnection, sftpChannel)
     camelContext.start()
 
     runBlocking {

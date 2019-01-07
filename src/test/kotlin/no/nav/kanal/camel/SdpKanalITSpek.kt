@@ -108,8 +108,6 @@ object SdpKanalITSpek : Spek({
             inputQueuePriorityBackout = "sdp_input_priority_boq",
             receiptQueueNormal = "sdp_receipt_normal",
             receiptQueuePriority = "sdp_receipt_priority",
-            receiptQueueNormalBackout = "sdp_receipt_normal_boq",
-            receiptPriorityBackoutQueue = "sdp_receipt_priority_boq",
             keystorePath = "build/keystore.p12.b64",
             truststorePath = "build/keystore.p12.b64",
             mqConcurrentConsumers = 1,
