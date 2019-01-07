@@ -18,7 +18,6 @@ import io.prometheus.client.exporter.common.TextFormat
 import kotlinx.coroutines.runBlocking
 import no.digipost.api.representations.EbmsAktoer
 import no.digipost.api.representations.EbmsOutgoingMessage
-import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.EbmsPull
@@ -30,8 +29,6 @@ import no.nav.kanal.config.VaultCredentials
 import no.nav.kanal.config.createConnectionFactory
 import no.nav.kanal.config.createJmsConfig
 import no.nav.kanal.config.createMessageSender
-import no.nav.kanal.log.LegalArchiveLogger
-import no.nav.kanal.log.LegalArchiveStub
 import no.nav.kanal.route.createDeadLetterRoute
 import no.nav.kanal.route.createReceiptPollingRoute
 import no.nav.kanal.route.createSendRoute
@@ -55,8 +52,7 @@ fun createCamelContext(
         vaultCredentials: VaultCredentials,
         sdpKeys: SdpKeys,
         mqConnection: ConnectionFactory,
-        sftpChannel: ChannelSftp,
-        legalArchive: LegalArchiveLogger
+        sftpChannel: ChannelSftp
 ): DefaultCamelContext = DefaultCamelContext().apply {
     val jmsConfig = createJmsConfig(mqConnection, config.mqConcurrentConsumers)
     val session = mqConnection.createConnection().apply {
@@ -84,8 +80,7 @@ fun createCamelContext(
 
     val messageSender = createMessageSender(datahandler, receiver, sdpKeys, vaultCredentials, config.ebmsEndpointUrl)
     val ebmsPull = EbmsPull(messageSender, receiver)
-    val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, legalArchive, messageSender, datahandler, receiver)
-    val boqLogger = BOQLogger(legalArchive)
+    val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, messageSender, datahandler, receiver)
     val backoutReason = BackoutReason()
     val xmlExtractor = XmlExtractor()
     val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
@@ -95,8 +90,8 @@ fun createCamelContext(
     addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptQueueNormal))
     addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalNormal, ebmsPull, receiptQueuePriority))
 
-    addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, boqLogger, backoutReason))
-    addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, boqLogger, backoutReason))
+    addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, backoutReason))
+    addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, backoutReason))
 
     addRoutes(createSendRoute("sendSDPNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", xmlExtractor, documentPackageCreator, ebmsPush))
     addRoutes(createSendRoute("sendSDPPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", xmlExtractor, documentPackageCreator, ebmsPush))
@@ -120,7 +115,7 @@ fun main(args: Array<String>) {
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
     sftpChannel.connect()
 
-    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, mqConnection, sftpChannel, LegalArchiveStub()) // TODO: Wire up legal archive
+    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, mqConnection, sftpChannel) // TODO: Wire up legal archive
     camelContext.start()
 
     runBlocking {

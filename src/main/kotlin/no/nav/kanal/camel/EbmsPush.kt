@@ -12,8 +12,6 @@ import no.digipost.api.representations.*
 import no.nav.kanal.SdpPayload
 import no.nav.kanal.config.*
 import no.nav.kanal.ebms.EbmsSender
-import no.nav.kanal.log.LegalArchiveLogger
-import no.nav.kanal.log.LogEvent
 
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
@@ -27,7 +25,6 @@ import net.logstash.logback.argument.StructuredArguments.keyValue
 class EbmsPush(
     private val maxRetries: Long,
     private val retryInterval: Long,
-    private val legalArchive: LegalArchiveLogger,
     messageSender: MessageSender,
     private val datahandler: EbmsAktoer,
     private val receiver: EbmsAktoer,
@@ -49,7 +46,6 @@ class EbmsPush(
                 throw e
             } catch (e: SOAPFaultException) {
                 log.error("Error during transmit", e.message)
-                legalArchive.logEvent(exchangeIn, LogEvent.MELDING_SENDT_TIL_DIFI_FEILET, ". Retry number $retryNumber. Error: ${e.cause}")
                 // check if we should retry based on connection problems
                 if (isConnectionProblem(e)) {
                     if (retryNumber + 1 == maxRetries) {

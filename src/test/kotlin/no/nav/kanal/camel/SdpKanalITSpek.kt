@@ -13,7 +13,6 @@ import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
 import no.nav.kanal.createCamelContext
-import no.nav.kanal.log.LegalArchiveLogger
 import no.nav.kanal.objectMapper
 import org.amshove.kluent.any
 import org.amshove.kluent.mock
@@ -118,7 +117,6 @@ object SdpKanalITSpek : Spek({
     )
     val vaultCredentials: VaultCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/vault.json"))
     val sftpChannel = mock(ChannelSftp::class)
-    val legalArchive = mock(LegalArchiveLogger::class)
 
     val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
 
@@ -126,7 +124,7 @@ object SdpKanalITSpek : Spek({
     val queueConnection = connectionFactory.createConnection()
     queueConnection.start()
 
-    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, connectionFactory, sftpChannel, legalArchive)
+    val camelContext = createCamelContext(config, vaultCredentials, sdpKeys, connectionFactory, sftpChannel)
     camelContext.start()
 
     val session = queueConnection.createSession()

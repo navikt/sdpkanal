@@ -1,7 +1,6 @@
 package no.nav.kanal.route
 
 import no.digipost.api.representations.EbmsOutgoingMessage
-import no.nav.kanal.camel.BOQLogger
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.XmlExtractor
@@ -16,7 +15,6 @@ import org.apache.camel.component.jms.JmsEndpoint
 fun CamelContext.createDeadLetterRoute(
         routeName: String,
         backoutQueue: JmsEndpoint,
-        boqLogger: BOQLogger,
         backoutReason: BackoutReason
 ) = object: RouteBuilder(this) {
     override fun configure() {
@@ -24,7 +22,6 @@ fun CamelContext.createDeadLetterRoute(
         from("direct:$routeName")
                 .log(LoggingLevel.ERROR, "EXCEPTION: Log and send to DLQ")
                 //.to("log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true")
-                .process(boqLogger)
                 .process(backoutReason)
                 .to(backoutQueue)
         // @formatter:on
