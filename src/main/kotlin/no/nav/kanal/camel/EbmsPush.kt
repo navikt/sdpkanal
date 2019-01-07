@@ -33,28 +33,34 @@ class EbmsPush(
     private val log: Logger = LoggerFactory.getLogger(EbmsPush::class.java)
 
     override fun process(exchangeIn: Exchange) {
-        log.info("EBMS is pushing")
+        log.info("EBMS is pushing ${exchangeIn.loggingKeys()}", *exchangeIn.loggingValues())
 
         for (retryNumber in 0.until(maxRetries)) {
             try {
                 val reply = createAndSendMessage(exchangeIn)
                 exchangeIn.`in`.body = reply
-                log.info("Message pushed, {}, {}", keyValue("callId", reply.messageId), keyValue("incomingMsgId", reply.messageId))
+                log.info("Message pushed ${exchangeIn.loggingKeys()}", *exchangeIn.loggingValues())
                 return
             } catch (e: Exception) {
-                log.error("Caught exception while trying to push message", e)
+                log.error("Caught exception while trying to push message ${exchangeIn.loggingKeys()}",
+                        *exchangeIn.loggingValues(),
+                        e)
                 throw e
             } catch (e: SOAPFaultException) {
-                log.error("Error during transmit", e.message)
+                log.error("Error during transmit ${exchangeIn.loggingKeys()}", *exchangeIn.loggingValues(), e.message)
                 // check if we should retry based on connection problems
                 if (isConnectionProblem(e)) {
                     if (retryNumber + 1 == maxRetries) {
                         throw RuntimeCamelException("Maximum retries reached and ClientException during push", e)
                     }
-                    log.warn("Failed to send message to meldingsformidler, waiting $retryInterval ms", e)
+                    log.warn("Failed to send message to meldingsformidler, waiting $retryInterval ms ${exchangeIn.loggingKeys()}",
+                            *exchangeIn.loggingValues(),
+                            e)
                     Thread.sleep(retryInterval)
                 } else {
-                    log.error("Exception caught is not marked as a temporary problem", e)
+                    log.error("Exception caught is not marked as a temporary problem ${exchangeIn.loggingKeys()}",
+                            *exchangeIn.loggingValues(),
+                            e)
                     throw RuntimeCamelException("ClientException during push: " + e.message, e)
                 }
             }
@@ -69,10 +75,10 @@ class EbmsPush(
 
         val sdpMelding = sbd.any as SDPDigitalPost
 
-        val conversationId = sbd.standardBusinessDocumentHeader.businessScope.scopes.first().instanceIdentifier
-        val messageId = sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier
+        val conversationId = exchangeIn.getIn().header<String>(CONVERSATION_ID_HEADER)
+        val messageId = exchangeIn.getIn().header<String>(MESSAGE_ID_HEADER)
         val action = if (sdpMelding.digitalPostInfo == null) PMode.Action.FORMIDLE_FYSISK else PMode.Action.FORMIDLE_DIGITAL
-        val mpcId = exchangeIn.getIn().getHeader(MPC_ID_HEADER, String::class.java)
+        val mpcId = exchangeIn.getIn().header<String>(MPC_ID_HEADER)
         val priority = exchangeIn.getIn().header<EbmsOutgoingMessage.Prioritet>(PRIORITY_HEADER)
         return ebmsSender.send(datahandler, receiver, sbd, documentPackage, priority, mpcId, messageId, conversationId, action)
     }

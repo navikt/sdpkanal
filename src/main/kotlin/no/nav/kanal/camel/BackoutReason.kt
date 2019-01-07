@@ -12,7 +12,9 @@ class BackoutReason : Processor {
 
     override fun process(exchange: Exchange) {
         val e = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception::class.java)
-        log.error("Sending message to backout, exception caught was", e)
+        log.error("Sending message to backout, exception caught was ${exchange.loggingKeys()}",
+                *exchange.loggingValues(),
+                e)
         // set original message as In
         exchange.setIn(exchange.unitOfWork.originalInMessage)
 

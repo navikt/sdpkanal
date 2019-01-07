@@ -5,10 +5,10 @@ import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.XmlExtractor
 import no.nav.kanal.camel.EbmsPush
+import no.nav.kanal.camel.MetadataExtractor
 import no.nav.kanal.config.MPC_ID_HEADER
 import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
-import org.apache.camel.LoggingLevel
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.jms.JmsEndpoint
 
@@ -20,8 +20,6 @@ fun CamelContext.createDeadLetterRoute(
     override fun configure() {
         // @formatter:off
         from("direct:$routeName")
-                .log(LoggingLevel.ERROR, "EXCEPTION: Log and send to DLQ")
-                //.to("log:no.nav.kanal?level=ERROR&amp;showAll=true&amp;showCaughtException=true&amp;showStackTrace=true")
                 .process(backoutReason)
                 .to(backoutQueue)
         // @formatter:on
@@ -34,7 +32,6 @@ fun CamelContext.createSendRoute(
         priority: EbmsOutgoingMessage.Prioritet,
         inputQueue: JmsEndpoint,
         backoutRoute: String,
-        xmlExtractor: XmlExtractor,
         documentPackageCreator: DocumentPackageCreator,
         ebmsPush: EbmsPush
 ) = object: RouteBuilder(this) {
@@ -46,7 +43,8 @@ fun CamelContext.createSendRoute(
                 .setHeader(MPC_ID_HEADER) { mpcId }
                 .onException(Exception::class.java).handled(true).to("direct:$backoutRoute")
                 .end()
-                .process(xmlExtractor)
+                .process(XmlExtractor())
+                .process(MetadataExtractor())
                 .process(documentPackageCreator)
                 .process(ebmsPush)
         // @formatter:on

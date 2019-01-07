@@ -41,7 +41,6 @@ fun CamelContext.createReceiptPollingRoute(
                 .choice()
                 .`when`(body().isNotNull)
                     .to(receiptQueue)
-                    .log("Received receipt")
                     .process { it.`in`.header<Summary.Timer>(RECEIPT_SUMMARY_HEADER).close() }
                 .otherwise()
                     //.log("Polling $routeName returned empty result")

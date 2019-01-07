@@ -17,13 +17,12 @@ import org.apache.camel.Exchange
 import org.apache.camel.Processor
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.oxm.jaxb.Jaxb2Marshaller
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import javax.xml.transform.stream.StreamResult
 
-class DocumentPackageCreator @Autowired constructor(
+class DocumentPackageCreator constructor(
         private val sdpKeys: SdpKeys,
         private val sftpChannel: ChannelSftp,
         private val documentDirectory: String
@@ -63,12 +62,13 @@ class DocumentPackageCreator @Autowired constructor(
 
         val certificate = Sertifikat.fraByteArray(base64Decoder.decode(sdpPayload.certificate))
         val encryptedASiCE = createCMSDocument.createCMS(archive.bytes, certificate)
-        log.info("Encrypted package with {} bytes, is now {}, used certificate {}",
+        log.info("Encrypted package with {} bytes, is now {}, used certificate {} ${exchange.loggingKeys()}",
                 archive.bytes.size,
                 encryptedASiCE.bytes.size,
-                Base64.getEncoder().encodeToString(sdpPayload.certificate))
+                Base64.getEncoder().encodeToString(sdpPayload.certificate),
+                *exchange.loggingValues())
 
-        log.info("Certificate information: {}", certificate.x509Certificate)
+        log.debug("Certificate information: {}, ${exchange.loggingKeys()}", certificate.x509Certificate, *exchange.loggingValues())
 
         exchange.getIn().setHeader(DOCUMENT_PACKAGE, Dokumentpakke(encryptedASiCE.bytes))
     }

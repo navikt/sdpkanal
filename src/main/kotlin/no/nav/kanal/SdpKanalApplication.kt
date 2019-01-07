@@ -82,7 +82,6 @@ fun createCamelContext(
     val ebmsPull = EbmsPull(messageSender, receiver)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, messageSender, datahandler, receiver)
     val backoutReason = BackoutReason()
-    val xmlExtractor = XmlExtractor()
     val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
 
     shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = 20 }
@@ -93,8 +92,8 @@ fun createCamelContext(
     addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, backoutReason))
     addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, backoutReason))
 
-    addRoutes(createSendRoute("sendSDPNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", xmlExtractor, documentPackageCreator, ebmsPush))
-    addRoutes(createSendRoute("sendSDPPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", xmlExtractor, documentPackageCreator, ebmsPush))
+    addRoutes(createSendRoute("sendSDPNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", documentPackageCreator, ebmsPush))
+    addRoutes(createSendRoute("sendSDPPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", documentPackageCreator, ebmsPush))
 }
 
 fun main(args: Array<String>) {

@@ -18,7 +18,7 @@ class XmlExtractor : Processor {
 
     override fun process(exchange: Exchange) {
         log.info("Extracting required metadata")
-        exchange.`in`.setHeader(SDP_PAYLOAD, extractPayload(exchange.getIn().body()))
+        exchange.getIn().setHeader(SDP_PAYLOAD, extractPayload(exchange.getIn().body()))
     }
 
     fun extractPayload(xml: String): SdpPayload = xmlInputFactory.createXMLStreamReader(StringReader(xml)).let {
