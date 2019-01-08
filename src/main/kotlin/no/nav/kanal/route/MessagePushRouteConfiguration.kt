@@ -6,6 +6,7 @@ import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.XmlExtractor
 import no.nav.kanal.camel.EbmsPush
 import no.nav.kanal.camel.MetadataExtractor
+import no.nav.kanal.camel.SdpPriceStatisticsCollector
 import no.nav.kanal.config.MPC_ID_HEADER
 import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
@@ -47,6 +48,7 @@ fun CamelContext.createSendRoute(
                 .process(MetadataExtractor())
                 .process(documentPackageCreator)
                 .process(ebmsPush)
+                .process(SdpPriceStatisticsCollector())
         // @formatter:on
     }
 

@@ -43,6 +43,8 @@ import javax.jms.Session
 
 
 const val METRICS_NAMESPACE = "sdpkanal"
+const val SEND_NORMAL_ROUTE_NAME = "sendSDPNormal"
+const val SEND_PRIORITY_ROUTE_NAME = "sendSDPPriority"
 val objectMapper: ObjectMapper = ObjectMapper().registerKotlinModule()
 
 val datahandler: EbmsAktoer = EbmsAktoer.avsender("889640782")
@@ -89,8 +91,8 @@ fun createCamelContext(
     addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, backoutReason))
     addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, backoutReason))
 
-    addRoutes(createSendRoute("sendSDPNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", documentPackageCreator, ebmsPush))
-    addRoutes(createSendRoute("sendSDPPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", documentPackageCreator, ebmsPush))
+    addRoutes(createSendRoute(SEND_NORMAL_ROUTE_NAME, config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", documentPackageCreator, ebmsPush))
+    addRoutes(createSendRoute(SEND_PRIORITY_ROUTE_NAME, config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", documentPackageCreator, ebmsPush))
 }
 
 fun main(args: Array<String>) {

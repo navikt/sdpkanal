@@ -212,8 +212,7 @@ class Soap(private val sbdHandler: SbdHandler, val keystore: KeyStore) : Provide
         }
 
         val newMsgInfo = MessageInfo(ZonedDateTime.now(), UUID.randomUUID().toString(), previousMessageInfo.messageId)
-        //val soapBodyId = request.soapBody.getAttributeValue(wsuNamespace)
-        val soapBodyId = "soapBody" // TODO
+        val soapBodyId = request.soapBody.getAttributeValue(wsuNamespace)
 
         val ebmsResponse = if (isUserMessage) {
             val sbd = sbdUnmarshaller.unmarshal(request.soapBody, StandardBusinessDocument::class.java).value

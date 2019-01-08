@@ -22,6 +22,9 @@ import java.io.ByteArrayOutputStream
 import java.util.Base64
 import javax.xml.transform.stream.StreamResult
 
+const val BILLABLE_BYTES_HEADER = "billable_bytes_header"
+const val ATTACHMENT_COUNT_HEADER = "attachment_count_header"
+
 class DocumentPackageCreator constructor(
         private val sdpKeys: SdpKeys,
         private val sftpChannel: ChannelSftp,
@@ -44,7 +47,13 @@ class DocumentPackageCreator constructor(
         val manifestFiles = listOf(listOf(sdpPayload.manifest.hoveddokument), sdpPayload.manifest.vedleggs).flatten()
         val files: MutableList<AsicEAttachable> = manifestFiles.map { it.toAttachable() }.toMutableList()
 
-        // TODO: Do some cleanup, this could be done better
+        /*
+        Not quite sure how we should do this properly, since the href is prefixed with a path from dokdist. We have to
+        remove this prefix when zipping the document package, this means SDPDokuments needs to have the prefixes removed
+        before we can send the message. The SPDDocument instances will later be used for deciding what the document
+        filename will be and update the manifest
+         */
+
         manifestFiles.forEach { it.href = it.href.split("/").last()  }
 
         val asicEManifest = Manifest(ByteArrayOutputStream().use {
@@ -55,8 +64,9 @@ class DocumentPackageCreator constructor(
         files.add(createSignature.createSignature(sdpKeys.keypair, files))
         files.add(asicEManifest)
 
-        // TODO: We probably don't need to get the billable bytes, might be interesting for grafana?
         val bytes = files.map { it.bytes.size.toLong() }.sum()
+        exchange.getIn().setHeader(BILLABLE_BYTES_HEADER, bytes)
+        exchange.getIn().setHeader(ATTACHMENT_COUNT_HEADER, files.count() - 1)
 
         val archive = createZip.zipIt(files)
 
@@ -80,16 +90,17 @@ class DocumentPackageCreator constructor(
     private fun SDPDokument.toAttachable() = SDPDokumentAsicEWrapper(this, sftpChannel, documentDirectory)
 
     class SDPDokumentAsicEWrapper(
-            private val sdpDokument: SDPDokument,
-            sftpChannel: ChannelSftp, documentDirectory: String
+        private val sdpDokument: SDPDokument,
+        sftpChannel: ChannelSftp,
+        documentDirectory: String
     ) : AsicEAttachable {
         private val log = LoggerFactory.getLogger(SDPDokumentAsicEWrapper::class.java)
         private val documentBytes: ByteArray = ByteArrayOutputStream().use {
             val filePath = documentDirectory + sdpDokument.href
             log.info("Trying to download file $filePath")
             sftpChannel.get(filePath, it)
-            it.toByteArray()
-        }
+            it
+        }.toByteArray()
 
         override fun getFileName(): String = sdpDokument.href
         override fun getMimeType(): String = sdpDokument.mime
