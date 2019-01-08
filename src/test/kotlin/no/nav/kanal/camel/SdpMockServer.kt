@@ -7,6 +7,8 @@ import org.apache.cxf.binding.soap.SoapMessage
 import org.apache.cxf.binding.soap.interceptor.SoapInterceptor
 import org.apache.cxf.endpoint.Server
 import org.apache.cxf.ext.logging.LoggingFeature
+import org.apache.cxf.headers.Header
+import org.apache.cxf.jaxb.JAXBDataBinding
 import org.apache.cxf.jaxws.JaxWsServerFactoryBean
 import org.apache.cxf.message.Message
 import org.apache.cxf.phase.AbstractPhaseInterceptor

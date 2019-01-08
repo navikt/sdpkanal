@@ -44,7 +44,9 @@ class EbmsSender(
                 afterPropertiesSet()
             },
             EbmsReferenceValidatorInterceptor(jaxb2Marshaller),
-            TransactionLogClientInterceptor(jaxb2Marshaller) // TODO: Replace this with our own for better logging
+            TransactionLogClientInterceptor(jaxb2Marshaller).apply {
+                setTransaksjonslogg(EbmsTransactionLogger())
+            }
     )
 
     private val messageSender = HttpComponentsMessageSender(HttpClientBuilder.create().addInterceptorFirst(RemoveContentLengthInterceptor()).build())
