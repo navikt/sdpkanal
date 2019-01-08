@@ -72,7 +72,6 @@ tasks.withType<Jar> {
 
 dependencies {
     // Communication libraries
-    implementation("com.atomikos:transactions:$atomikosVersion")
     implementation("com.fasterxml.woodstox:woodstox-core:$woodstoxVersion")
     implementation("com.ibm.mq:com.ibm.mq.allclient:$mqVersion")
     implementation("com.jcraft:jsch:$jschVersion")

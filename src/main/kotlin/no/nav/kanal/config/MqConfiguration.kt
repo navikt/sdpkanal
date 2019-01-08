@@ -27,12 +27,12 @@ fun createConnectionFactory(
 
 fun createJmsConfig(
         connectionFactory: ConnectionFactory,
-        concurrentConsumers: Int?
+        concurrentConsumers: Int
 ): JmsConfiguration {
     val jmsConfig = JmsConfiguration()
     jmsConfig.connectionFactory = connectionFactory
     jmsConfig.isTransacted = true
     jmsConfig.transactionTimeout = 1800
-    jmsConfig.concurrentConsumers = concurrentConsumers!!
+    jmsConfig.concurrentConsumers = concurrentConsumers
     return jmsConfig
 }
