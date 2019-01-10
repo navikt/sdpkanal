@@ -5,6 +5,7 @@ import com.ibm.msg.client.wmq.WMQConstants
 import org.apache.camel.component.jms.JmsConfiguration
 import org.springframework.jms.connection.UserCredentialsConnectionFactoryAdapter
 import javax.jms.ConnectionFactory
+import javax.net.ssl.SSLSocketFactory
 
 fun createConnectionFactory(
         mqHost: String,
@@ -19,6 +20,7 @@ fun createConnectionFactory(
             queueManager = mqQueueManager
             transportType = WMQConstants.WMQ_CM_CLIENT
             channel = channelName
+            sslSocketFactory = SSLSocketFactory.getDefault()
             sslCipherSuite = "TLS_RSA_WITH_AES_256_CBC_SHA"
         })
         setUsername(credentials.mqUsername)
