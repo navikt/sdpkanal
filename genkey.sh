@@ -4,3 +4,4 @@ keytool -genkey -noprompt \
  -keystore keystore.p12 \
  -storepass changeit \
  -keypass changeit
+keytool -list -keystore keystore.p12 -storepass changeit -storetype pkcs12
