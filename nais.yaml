@@ -46,6 +46,10 @@ fasitResources:
     resourceType: Queue
   - alias: sdpkanal_channel
     resourceType: Channel
+  - alias: srvsdpkanal
+    resourceType: Certificate
+    propertyMap:
+      password: SRVSDPKANAL_CERT_PASSWORD
 #  - alias: varseltjeneste_channel
 #    resourceType: Channel
 #    propertyMap:

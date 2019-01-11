@@ -97,6 +97,10 @@ fun createCamelContext(
 
 fun main(args: Array<String>) {
     System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl")
+    System.setProperty("javax.net.ssl.keyStore", System.getenv("SRVSDPKANAL_KEYSTORE"))
+    System.setProperty("javax.net.ssl.keyStoreType", "jks")
+    System.setProperty("javax.net.ssl.keyStorePassword", System.getenv("SRVSDPKANAL_CERT_PASSWORD"))
+
     val config = SdpConfiguration()
 
     val vaultCredentials: VaultCredentials = objectMapper.readValue(File(config.credentialsPath))
