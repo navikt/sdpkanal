@@ -4,7 +4,7 @@ pipeline {
     agent any
 
     tools {
-        jdk 'openjdk11'
+        jdk '11'
     }
 
     environment {
