@@ -8,6 +8,7 @@ import no.digipost.api.representations.Dokumentpakke
 import no.digipost.api.representations.EbmsAktoer
 import no.digipost.api.representations.EbmsOutgoingMessage
 import no.digipost.api.representations.Mpc
+import no.digipost.api.xml.Marshalling
 import no.digipost.xsd.types.DigitalPostformidling
 import org.springframework.oxm.jaxb.Jaxb2Marshaller
 import org.springframework.ws.WebServiceMessage
@@ -32,7 +33,7 @@ class EbmsOutgoingSender(
     private val action: PMode.Action,
     private val marshaller: Jaxb2Marshaller
 ) : EbmsContextAware(), WebServiceMessageCallback {
-    override fun doWithMessage(message: WebServiceMessage?) {
+    override fun doWithMessage(message: WebServiceMessage) {
         message as SoapMessage
         val sbdPayload = sbd.any as DigitalPostformidling
         sbdPayload.dokumentpakkefingeravtrykk = Reference()
@@ -41,7 +42,8 @@ class EbmsOutgoingSender(
         message.addAttachment(generateContentId(), DataHandler(documentPackage))
 
         val mpc = Mpc(priority, mpcId)
-        signer.sign(sbd)
+        val signedDoc = signer.sign(sbd)
+        Marshalling.marshal(signedDoc, message.envelope.body.payloadResult)
         ebmsContext.addRequestStep(EbmsUserMessagingStep(
                 mpc = mpc,
                 messageId = messageId,
