@@ -8,6 +8,7 @@ import org.w3.xmldsig.Reference
 data class EbmsReceipt(
         private val messageId: String,
         val refToMessageId: String,
+        val conversationId: String?,
         val sbdBytes: ByteArray,
         val references: Collection<Reference>
 ) : KanBekreftesSomBehandletKvittering {

@@ -1,5 +1,6 @@
 package no.nav.kanal.camel
 
+import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.digipost.api.representations.EbmsAktoer
 import no.digipost.api.representations.EbmsPullRequest
 import no.nav.kanal.config.MPC_ID_HEADER
@@ -19,6 +20,15 @@ class EbmsPull constructor(
         val receipt = ebmsSender.fetchReceipt(EbmsPullRequest(databehandler, exchange.getIn().header(PRIORITY_HEADER), exchange.getIn().header(MPC_ID_HEADER)))
 
         if (receipt != null) {
+            val loggingValues = arrayOf(
+                    keyValue("callId", receipt.conversationId),
+                    keyValue("messageId", receipt.meldingsId),
+                    keyValue("conversationId", receipt.conversationId)
+            )
+            val loggingKeys = loggingValues.joinToString(", ", "(", ")") { "{}" }
+
+            log.info("Received a receipt $loggingKeys", loggingValues)
+
             ebmsSender.confirmReceipt(receipt)
 
             if (log.isDebugEnabled) {
