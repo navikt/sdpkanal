@@ -83,7 +83,7 @@ fun createCamelContext(
     val backoutReason = BackoutReason()
     val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
 
-    shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = 20 }
+    shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = config.shutdownTimeout }
     disableJMX()
     addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptQueueNormal))
     addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalNormal, ebmsPull, receiptQueuePriority))

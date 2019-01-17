@@ -51,7 +51,7 @@ class EbmsReceiptExtractor : EbmsContextAware(), WebServiceMessageExtractor<Ebms
             }
 
     private fun NodeList.find(name: String): Node? {
-        for (i in 0.rangeTo(length)) {
+        for (i in 0.until(length)) {
             if (item(i)?.localName == name)
                 return item(i)
         }

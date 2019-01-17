@@ -49,7 +49,8 @@ data class SdpConfiguration(
         val documentDirectory: String = config["no.nav.sdpkanal.dokument.path.prefix"],
         val sftpUrl: String = config["no.nav.sdpkanal.sftp.url"],
         val sftpKeyPath: String = config["no.nav.sdpkanal.sftp.key.path"],
-        val knownHostsFile: String = config["no.nav.sdpkanal.sftp.known.hosts"]
+        val knownHostsFile: String = config["no.nav.sdpkanal.sftp.known.hosts"],
+        val shutdownTimeout: Long = config["no.nav.sdpkanal.shutdown.timeout"]
 )
 
 inline operator fun <reified T> Configuration.get(key: String): T = when (T::class) {

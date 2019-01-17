@@ -19,7 +19,9 @@ import no.nav.kanal.createCamelContext
 import no.nav.kanal.objectMapper
 import org.amshove.kluent.any
 import org.amshove.kluent.mock
+import org.amshove.kluent.shouldBeGreaterOrEqualTo
 import org.amshove.kluent.shouldBeInstanceOf
+import org.amshove.kluent.shouldContain
 import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
@@ -93,7 +95,8 @@ object SdpKanalITSpek : Spek({
     //Files.write(Paths.get("build/keystore.p12.b64"), keystoreB64)
 
     val requestHandler = spy(QueuedReceiptHandler())
-    val sdpServer = createSDPMockServer(sbdHandler = requestHandler, port = sdpMockPort, keyStore = keyStore)
+    fun initSdpServer() = createSDPMockServer(sbdHandler = requestHandler, port = sdpMockPort, keyStore = keyStore)
+    var sdpServer = initSdpServer()
 
     val config = SdpConfiguration(
             knownHostsFile = "TODO",
@@ -110,7 +113,7 @@ object SdpKanalITSpek : Spek({
             receiptQueuePriority = "sdp_receipt_priority",
             keystorePath = "build/keystore.p12.b64",
             truststorePath = "build/keystore.p12.b64",
-            mqConcurrentConsumers = 1,
+            mqConcurrentConsumers = 4,
             receiptPollIntervalNormal = 1000
     )
     val vaultCredentials: VaultCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/vault.json"))
@@ -128,6 +131,7 @@ object SdpKanalITSpek : Spek({
     val session = queueConnection.createSession()
 
     val normalQueueSender = session.createProducer(session.createQueue(config.inputQueueNormal))
+    val normalQueueConsumer = session.createConsumer(session.createQueue(config.inputQueueNormal))
     val priorityQueueSender = session.createProducer(session.createQueue(config.inputQueuePriority))
     val normalReceiptConsumer = session.createConsumer(session.createQueue(config.receiptQueueNormal))
     val priorityReceiptConsumer = session.createConsumer(session.createQueue(config.receiptQueuePriority))
@@ -136,6 +140,12 @@ object SdpKanalITSpek : Spek({
 
     val messageBytes = IOUtils.toByteArray(SdpKanalITSpek::class.java.getResourceAsStream("/payloads/inline.xml"))
 
+    fun shutdownServer() {
+        sdpServer.server.stop()
+        sdpServer.server.destroy()
+        sdpServer.sfb.bus.shutdown(true)
+    }
+
     afterEachTest {
         reset(requestHandler)
     }
@@ -143,9 +153,7 @@ object SdpKanalITSpek : Spek({
     afterGroup {
         camelContext.shutdown()
         queueConnection.close()
-        sdpServer.server.stop()
-        sdpServer.server.destroy()
-        sdpServer.sfb.bus.shutdown(true)
+        shutdownServer()
         activeMQServer.stop(true)
         println("SHUTDOWN")
     }
@@ -212,12 +220,51 @@ object SdpKanalITSpek : Spek({
                     throw RuntimeException("Integration test")
                 }
 
-                //val message = backoutQueue.receive(10000)
-                //message shouldBeInstanceOf TextMessage::class
-                //message as TextMessage
-                //message.text shouldEqual messageBytes.toString(Charsets.UTF_8)
+                val message = backoutQueue.receive(10000)
+                message shouldBeInstanceOf TextMessage::class
+                message as TextMessage
+                message.text shouldEqual payload
                 //notify.matches(10000, TimeUnit.MILLISECONDS) shouldEqual true
             }
+        }
+    }
+
+    describe("In-flight messages") {
+        it("In-flight messages get sent to BOQ whenever they can't reach the message dispatcher") {
+            shutdownServer()
+
+            val numberOfMessages = 100
+
+            val inputMessages = 0.until(numberOfMessages).map { genPayload() }
+            inputMessages.forEach { normalQueueSender.send(session.createTextMessage(it)) }
+
+            // Let the route run for a second to make sure its in a transaction
+            Thread.sleep(1000)
+
+            camelContext.shutdown()
+
+            val backoutMessages = 0.rangeTo(numberOfMessages*2)
+                    .map { normalBackoutConsumer.receiveNoWait() }
+                    .filterNotNull()
+                    .filter { it is TextMessage }
+
+            val inputQueueMessages = 0.rangeTo(numberOfMessages*2)
+                    .map { normalQueueConsumer.receiveNoWait() }
+                    .filterNotNull()
+                    .filter { it is TextMessage }
+
+            val messagesLeft = listOf(backoutMessages, inputQueueMessages).flatten()
+                    .map { it as TextMessage }
+                    .map { it.text }
+
+            println("Done getting messages from queues, results: backout=${backoutMessages.size}, input=${inputQueueMessages.size}")
+            backoutMessages.size shouldBeGreaterOrEqualTo config.mqConcurrentConsumers
+            messagesLeft.size shouldBeGreaterOrEqualTo numberOfMessages
+            inputMessages.forEach { messagesLeft shouldContain it }
+
+            camelContext.start()
+
+            sdpServer = initSdpServer()
         }
     }
 })
