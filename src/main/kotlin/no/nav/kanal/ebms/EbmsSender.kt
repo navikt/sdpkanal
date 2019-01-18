@@ -38,7 +38,6 @@ class EbmsSender(
         private val jaxb2Marshaller: Jaxb2Marshaller = Marshalling.getMarshallerSingleton(),
         private val signer: SdpMeldingSigner = SdpMeldingSigner(sdpKeys.keypair.keyStoreInfo, jaxb2Marshaller)
 ) {
-    private var index = 0
     private val clientInterceptors = arrayOf(
             EbmsClientInterceptor(jaxb2Marshaller, receiver),
             WsSecurityInterceptor(sdpKeys.keypair.keyStoreInfo, null).apply {
@@ -51,9 +50,7 @@ class EbmsSender(
             LegalArchiveLoggingInterceptor()
     )
     private val messageSender = HttpComponentsMessageSender(HttpClientBuilder.create()
-            .addInterceptorFirst(RemoveContentLengthInterceptor())
-            //.addInterceptorFirst(PayloadArchiverResponseInterceptor())
-            .build())
+            .addInterceptorFirst(RemoveContentLengthInterceptor()).build())
 
     private val saajSoapMessageFactory: SaajSoapMessageFactory = SaajSoapMessageFactory(MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL)).apply {
         afterPropertiesSet()
