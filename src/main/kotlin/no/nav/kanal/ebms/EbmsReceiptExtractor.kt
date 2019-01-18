@@ -7,6 +7,8 @@ import org.springframework.ws.soap.SoapMessage
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
 import java.io.ByteArrayOutputStream
+import java.nio.file.Files
+import java.nio.file.Paths
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
@@ -34,6 +36,7 @@ class EbmsReceiptExtractor : EbmsContextAware(), WebServiceMessageExtractor<Ebms
                         ?.childNodes?.find("Scope")
                         ?.childNodes?.find("InstanceIdentifier")
                         ?.firstChild?.nodeValue
+                Files.newOutputStream(Paths.get("receipt_$conversationId.bin")).use { message.writeTo(it) }
                 EbmsReceipt(
                         sbdBytes = ByteArrayOutputStream().use {
                             tf.newTransformer()

@@ -18,13 +18,13 @@ import org.springframework.oxm.jaxb.Jaxb2Marshaller
 import org.springframework.ws.client.core.WebServiceTemplate
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument
 import no.digipost.api.exceptions.MessageSenderFaultMessageResolver
-import no.digipost.api.handlers.EbmsContextAwareWebServiceTemplate
 import no.digipost.api.interceptors.EbmsClientInterceptor
 import no.digipost.api.interceptors.EbmsReferenceValidatorInterceptor
 import no.digipost.api.interceptors.RemoveContentLengthInterceptor
 import no.digipost.api.interceptors.TransactionLogClientInterceptor
 import no.digipost.api.interceptors.WsSecurityInterceptor
 import no.nav.kanal.config.SdpKeys
+import no.nav.kanal.interceptor.LegalArchiveLoggingInterceptor
 import org.apache.http.impl.client.HttpClientBuilder
 import org.springframework.ws.soap.saaj.SaajSoapMessageFactory
 import org.springframework.ws.transport.http.HttpComponentsMessageSender
@@ -38,6 +38,7 @@ class EbmsSender(
         private val jaxb2Marshaller: Jaxb2Marshaller = Marshalling.getMarshallerSingleton(),
         private val signer: SdpMeldingSigner = SdpMeldingSigner(sdpKeys.keypair.keyStoreInfo, jaxb2Marshaller)
 ) {
+    private var index = 0
     private val clientInterceptors = arrayOf(
             EbmsClientInterceptor(jaxb2Marshaller, receiver),
             WsSecurityInterceptor(sdpKeys.keypair.keyStoreInfo, null).apply {
@@ -46,16 +47,19 @@ class EbmsSender(
             EbmsReferenceValidatorInterceptor(jaxb2Marshaller),
             TransactionLogClientInterceptor(jaxb2Marshaller).apply {
                 setTransaksjonslogg(EbmsTransactionLogger())
-            }
+            },
+            LegalArchiveLoggingInterceptor()
     )
-
-    private val messageSender = HttpComponentsMessageSender(HttpClientBuilder.create().addInterceptorFirst(RemoveContentLengthInterceptor()).build())
+    private val messageSender = HttpComponentsMessageSender(HttpClientBuilder.create()
+            .addInterceptorFirst(RemoveContentLengthInterceptor())
+            //.addInterceptorFirst(PayloadArchiverResponseInterceptor())
+            .build())
 
     private val saajSoapMessageFactory: SaajSoapMessageFactory = SaajSoapMessageFactory(MessageFactory.newInstance(SOAPConstants.SOAP_1_2_PROTOCOL)).apply {
         afterPropertiesSet()
     }
 
-    private val messageTemplate: WebServiceTemplate = EbmsContextAwareWebServiceTemplate(saajSoapMessageFactory, receiver).apply {
+    private val messageTemplate: WebServiceTemplate = EbmsLoggingWebServiceTemplate(saajSoapMessageFactory, receiver).apply {
         marshaller = jaxb2Marshaller
         unmarshaller = jaxb2Marshaller
         faultMessageResolver = MessageSenderFaultMessageResolver(jaxb2Marshaller)

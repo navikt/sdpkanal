@@ -17,6 +17,8 @@ import org.springframework.ws.soap.SoapMessage
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument
 import org.w3.xmldsig.DigestMethod
 import org.w3.xmldsig.Reference
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.UUID
 import javax.activation.DataHandler
 
@@ -29,10 +31,11 @@ class EbmsOutgoingSender(
     private val priority: EbmsOutgoingMessage.Prioritet,
     private val mpcId: String,
     private val messageId: String,
-    private val conversationId: String,
+    override val conversationId: String,
     private val action: PMode.Action,
     private val marshaller: Jaxb2Marshaller
-) : EbmsContextAware(), WebServiceMessageCallback {
+) : EbmsContextAware(), WebServiceMessageCallback, LoggableContext {
+    override val shouldBeLogged: Boolean = true
     override fun doWithMessage(message: WebServiceMessage) {
         message as SoapMessage
         val sbdPayload = sbd.any as DigitalPostformidling
@@ -53,7 +56,6 @@ class EbmsOutgoingSender(
                 datahandler = dataHandler,
                 receiver = technicalReceiver,
                 marshaller = marshaller))
-
     }
 
     private fun generateContentId(): String {
