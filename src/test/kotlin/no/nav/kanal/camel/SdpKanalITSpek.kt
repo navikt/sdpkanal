@@ -9,9 +9,6 @@ import com.nhaarman.mockitokotlin2.verify
 import no.difi.begrep.sdp.schema_v10.SDPKvittering
 import no.difi.begrep.sdp.schema_v10.SDPMelding
 import no.digipost.api.representations.EbmsOutgoingMessage
-import no.nav.kanal.BILLABLE_BYTES_SUMMARY
-import no.nav.kanal.SEND_NORMAL_ROUTE_NAME
-import no.nav.kanal.SEND_PRIORITY_ROUTE_NAME
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
@@ -26,7 +23,6 @@ import org.amshove.kluent.shouldEqual
 import org.amshove.kluent.shouldNotEqual
 import org.apache.activemq.artemis.core.config.impl.ConfigurationImpl
 import org.apache.activemq.artemis.core.server.ActiveMQServers
-import org.apache.camel.builder.NotifyBuilder
 import org.apache.commons.io.IOUtils
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.SignalMessage
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.UserMessage
@@ -39,7 +35,6 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Base64
 import java.util.UUID
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.jms.BytesMessage
 import javax.jms.ConnectionFactory
@@ -91,8 +86,6 @@ object SdpKanalITSpek : Spek({
             store(it, "changeit".toCharArray())
         }
     }
-    //val keystoreB64 = Base64.getEncoder().encode(Files.readAllBytes(Paths.get("build/keystore.p12")))
-    //Files.write(Paths.get("build/keystore.p12.b64"), keystoreB64)
 
     val requestHandler = spy(QueuedReceiptHandler())
     fun initSdpServer() = createSDPMockServer(sbdHandler = requestHandler, port = sdpMockPort, keyStore = keyStore)
