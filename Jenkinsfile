@@ -44,7 +44,7 @@ pipeline {
         }
         stage('deploy to preprod') {
             steps {
-                deployApp action: 'kubectlDeploy', cluster: 'preprod-fss', placeholders: ["config_file" : "config-preprod.env"]
+                deployApp action: 'kubectlDeploy', cluster: 'preprod-fss', placeholderFile: "config-preprod.env"
             }
         }
     }
