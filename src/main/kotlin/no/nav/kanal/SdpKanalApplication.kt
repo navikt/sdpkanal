@@ -100,7 +100,9 @@ fun createCamelContext(
 }
 
 fun main(args: Array<String>) {
-    Files.copy(Files.newInputStream(Paths.get("/var/run/secrets/nais.io/vault/srvsdpkanal.jks.b64")), Paths.get("/tmp/srvsdpkanal.jks"))
+    Base64.getDecoder().wrap(Files.newInputStream(Paths.get("/var/run/secrets/nais.io/vault/srvsdpkanal.jks.b64"))).use {
+        Files.copy(it, Paths.get("/tmp/srvsdpkanal.jks"))
+    }
 
 
     val config = SdpConfiguration()
