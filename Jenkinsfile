@@ -42,12 +42,6 @@ pipeline {
                 dockerUtils action: 'createPushImage'
             }
         }
-        stage('validate & upload nais.yaml to nexus m2internal') {
-            steps {
-                nais action: 'validate'
-                nais action: 'upload'
-            }
-        }
         stage('deploy to preprod') {
             steps {
                 deployApp action: 'kubectlDeploy', cluster: 'preprod-fss', placeholders: ["config_file" : "config-preprod.env"]
@@ -58,6 +52,7 @@ pipeline {
         always {
             postProcess action: 'always'
             junit '**/build/test-results/test/*.xml'
+            archiveArtifacts artifacts: 'naiserator-deployment-yamls/*'
             archiveArtifacts artifacts: '**/build/libs/*', allowEmptyArchive: true
             archiveArtifacts artifacts: '**/build/install/*', allowEmptyArchive: true
         }

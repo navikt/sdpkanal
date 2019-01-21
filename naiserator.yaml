@@ -5,12 +5,12 @@ metadata:
   labels:
     team: "integrasjon"
 spec:
-image: "repo.adeo.no:5443/integrasjon/sdpkanal"
-team: integrasjon
-replicas:
-  min: 1
-  max: 1
-port: 8080
+  image: "repo.adeo.no:5443/integrasjon/sdpkanal"
+  team: integrasjon
+  replicas:
+    min: 1
+    max: 1
+  port: 8080
   liveness:
     path: /is_alive
     initialDelay: 5
