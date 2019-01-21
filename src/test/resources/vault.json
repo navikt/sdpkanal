@@ -9,5 +9,6 @@
   "sftpUsername":"sftpuser",
   "sftpKeyPassword":"secure",
   "serviceuserUsername": "srvit",
-  "serviceuserPassword": "secure"
+  "serviceuserPassword": "secure",
+  "applicationCertificatePassword": "secure"
 }
