@@ -57,3 +57,5 @@ spec:
       value: {{SDPKANAL_CHANNEL_NAME}}
     - name: EBMS_MSH_URL
       value: {{EBMS_MSH_URL}}
+    - name: NO_NAV_LEGALARCHIVE_URL
+      value: {{NO_NAV_LEGALARCHIVE_URL}}
