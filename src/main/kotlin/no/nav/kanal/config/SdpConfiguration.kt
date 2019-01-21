@@ -40,6 +40,7 @@ data class SdpConfiguration(
         val inputQueuePriorityBackout: String = config["sdp.send.prioritert.boq.queuename"],
         val receiptQueueNormal: String = config["sdp.kvittering.standard.queuename"],
         val receiptQueuePriority: String = config["sdp.kvittering.prioritert.queuename"],
+        val legalArchiveUrl: String = config["no.nav.legalarchive.url"],
         val receiptPollIntervalNormal: Long = config["ebms.pullinterval.normal"],
         val receiptPollIntervalPriority: Long = config["ebms.pullinterval.normal"],
         val mpcNormal: String = config["ebms.mpc.normal"],

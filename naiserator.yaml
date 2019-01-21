@@ -1,0 +1,58 @@
+apiVersion: 'nais.io/v1alpha1'
+kind: Application
+metadata:
+  namespace: default
+  labels:
+    team: "integrasjon"
+spec:
+image: "repo.adeo.no:5443/integrasjon/sdpkanal"
+team: integrasjon
+replicas:
+  min: 1
+  max: 1
+port: 8080
+  liveness:
+    path: /is_alive
+    initialDelay: 5
+    periodSeconds: 5
+    failureThreshold: 30
+  readiness:
+    path: /is_ready
+    initialDelay: 5
+    periodSeconds: 5
+    failureThreshold: 30
+  prometheus:
+    enabled: true
+    path: /prometheus
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 768Mi
+  vault:
+    enabled: true
+  env:
+    - name: MQGATEWAY04_HOSTNAME
+      value: {{ MQGATEWAY04_HOSTNAME }}
+    - name: MQGATEWAY04_PORT
+      value: {{ MQGATEWAY04_PORT }}
+    - name: MQGATEWAY04_NAME
+      value: {{ MQGATEWAY04_NAME }}
+    - name: SDP_SEND_STANDARD_QUEUENAME
+      value: {{ SDP_SEND_STANDARD_QUEUENAME }}
+    - name: SDP_SEND_PRIORITERT_QUEUENAME
+      value: {{ SDP_SEND_PRIORITERT_QUEUENAME }}
+    - name: SDP_SEND_STANDARD_BOQ_QUEUENAME
+      value: {{ SDP_SEND_STANDARD_BOQ_QUEUENAME }}
+    - name: SDP_SEND_PRIORITERT_BOQ_QUEUENAME
+      value: {{ SDP_SEND_PRIORITERT_BOQ_QUEUENAME }}
+    - name: SDP_KVITTERING_STANDARD_QUEUENAME
+      value: {{ SDP_KVITTERING_STANDARD_QUEUENAME }}
+    - name: SDP_KVITTERING_PRIORITERT_QUEUENAME
+      value: {{ SDP_KVITTERING_PRIORITERT_QUEUENAME }}
+    - name: SDPKANAL_CHANNEL_NAME
+      value: {{ SDPKANAL_CHANNEL_NAME }}
+    - name: EBMS_MSH_URL
+      value: {{ EBMS_MSH_URL }}

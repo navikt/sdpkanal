@@ -106,6 +106,7 @@ object SdpKanalITSpek : Spek({
     fun initSdpServer() = createSDPMockServer(sbdHandler = requestHandler, port = sdpMockPort, keyStore = keyStore)
     var sdpServer = initSdpServer()
 
+    val vaultCredentials: VaultCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/vault.json"))
     val config = SdpConfiguration(
             knownHostsFile = "TODO",
             ebmsEndpointUrl = "http://localhost:$sdpMockPort/sdpmock",
@@ -122,9 +123,9 @@ object SdpKanalITSpek : Spek({
             keystorePath = "build/keystore.p12.b64",
             truststorePath = "build/keystore.p12.b64",
             mqConcurrentConsumers = 4,
-            receiptPollIntervalNormal = 1000
+            receiptPollIntervalNormal = 1000,
+            legalArchiveUrl = "http://localhost:$legalArchiveMockPort/upload"
     )
-    val vaultCredentials: VaultCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/vault.json"))
 
     val requestMock = mock<() -> Any>()
 
@@ -140,7 +141,7 @@ object SdpKanalITSpek : Spek({
         }
     }.start()
 
-    val legalArchiveLogger = LegalArchiveLogger("http://localhost:$legalArchiveMockPort/upload", "user", "pass")
+    val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, "user", "pass")
     val sftpChannel = mock(ChannelSftp::class)
 
     val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)

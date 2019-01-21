@@ -117,7 +117,7 @@ fun main(args: Array<String>) {
     jschSession.connect()
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
     sftpChannel.connect()
-    val legalArchiveLogger = LegalArchiveLogger("TODO", vaultCredentials.serviceuserUsername, vaultCredentials.serviceuserPassword)
+    val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, vaultCredentials.serviceuserUsername, vaultCredentials.serviceuserPassword)
 
     val camelContext = createCamelContext(config, sdpKeys, mqConnection, sftpChannel, legalArchiveLogger)
     camelContext.start()

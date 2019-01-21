@@ -49,7 +49,7 @@ pipeline {
         }
         stage('deploy to preprod') {
             steps {
-                deployApp action: 'jiraPreprod'
+                deployApp action: 'kubectlDeploy', cluster: 'preprod-fss', placeholders: ["config_file" : "config-preprod.env"]
             }
         }
     }
