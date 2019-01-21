@@ -37,6 +37,9 @@ import org.apache.camel.impl.DefaultCamelContext
 import org.apache.camel.impl.DefaultShutdownStrategy
 import java.io.File
 import java.net.URI
+import java.nio.file.Files
+import java.nio.file.Paths
+import java.util.Base64
 import java.util.concurrent.TimeUnit
 import javax.jms.ConnectionFactory
 import javax.jms.Session
@@ -97,14 +100,16 @@ fun createCamelContext(
 }
 
 fun main(args: Array<String>) {
-    System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl")
-    System.setProperty("javax.net.ssl.keyStore", System.getenv("SRVSDPKANAL_KEYSTORE"))
-    System.setProperty("javax.net.ssl.keyStoreType", "jks")
-    System.setProperty("javax.net.ssl.keyStorePassword", System.getenv("SRVSDPKANAL_CERT_PASSWORD"))
+    Files.copy(Files.newInputStream(Paths.get("/var/run/secrets/nais.io/vault/srvsdpkanal.jks.b64")), Paths.get("/tmp/srvsdpkanal.jks"))
+
 
     val config = SdpConfiguration()
-
     val vaultCredentials: VaultCredentials = objectMapper.readValue(File(config.credentialsPath))
+
+    System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl")
+    System.setProperty("javax.net.ssl.keyStore", "/tmp/srvsdpkanal.jks")
+    System.setProperty("javax.net.ssl.keyStoreType", "jks")
+    System.setProperty("javax.net.ssl.keyStorePassword", vaultCredentials.applicationCertificatePassword)
 
     val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
 

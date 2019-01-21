@@ -11,5 +11,6 @@ data class VaultCredentials(
     val sftpUsername: String,
     val sftpKeyPassword: String,
     val serviceuserUsername: String,
-    val serviceuserPassword: String
+    val serviceuserPassword: String,
+    val applicationCertificatePassword: String
 )
