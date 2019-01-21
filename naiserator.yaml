@@ -6,7 +6,7 @@ metadata:
   labels:
     team: "integrasjon"
 spec:
-  image: "repo.adeo.no:5443/integrasjon/sdpkanal"
+  image: "repo.adeo.no:5443/integrasjon/sdpkanal:@@VERSION@@"
   team: integrasjon
   replicas:
     min: 1
@@ -38,7 +38,7 @@ spec:
     - name: MQGATEWAY04_HOSTNAME
       value: {{MQGATEWAY04_HOSTNAME}}
     - name: MQGATEWAY04_PORT
-      value: {{MQGATEWAY04_PORT}}
+      value: '{{MQGATEWAY04_PORT}}'
     - name: MQGATEWAY04_NAME
       value: {{MQGATEWAY04_NAME}}
     - name: SDP_SEND_STANDARD_QUEUENAME
