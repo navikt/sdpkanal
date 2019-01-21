@@ -8,6 +8,7 @@ pipeline {
     }
 
     environment {
+        KUBECONFIG="kubeconfig"
         ZONE = 'fss'
         APPLICATION_NAME = 'sdpkanal'
         DOCKER_SLUG = 'integrasjon'
