@@ -1,14 +1,18 @@
 package no.nav.kanal.interceptor
 
+import kotlinx.coroutines.runBlocking
+import no.nav.kanal.LegalArchiveLogger
 import no.nav.kanal.ebms.CONVERSATION_ID_PROPERTY
 import no.nav.kanal.ebms.SHOULD_BE_LOGGED_PROPERTY
+import org.slf4j.LoggerFactory
 import org.springframework.ws.client.support.interceptor.ClientInterceptor
 import org.springframework.ws.context.MessageContext
+import toByteArray
 import java.lang.Exception
-import java.nio.file.Files
-import java.nio.file.Paths
 
-class LegalArchiveLoggingInterceptor : ClientInterceptor {
+class LegalArchiveLoggingInterceptor(val legalArchiveLogger: LegalArchiveLogger) : ClientInterceptor {
+    val log = LoggerFactory.getLogger(LegalArchiveLoggingInterceptor::class.java)
+
     override fun handleFault(messageContext: MessageContext): Boolean {
         return true
     }
@@ -19,9 +23,13 @@ class LegalArchiveLoggingInterceptor : ClientInterceptor {
 
     override fun handleResponse(ctx: MessageContext): Boolean {
         if (ctx.getProperty(SHOULD_BE_LOGGED_PROPERTY) == true) {
-            val conversationId = ctx.getProperty(CONVERSATION_ID_PROPERTY)
-            Files.newOutputStream(Paths.get("payload_out_$conversationId.bin")).use { ctx.request.writeTo(it) }
-            Files.newOutputStream(Paths.get("payload_in_$conversationId.bin")).use { ctx.response.writeTo(it) }
+            val conversationId = ctx.getProperty(CONVERSATION_ID_PROPERTY) as String
+            runBlocking {
+                legalArchiveLogger.archiveDocumentLogOnException(conversationId, "NAV", "DIFI meldingsformidler",
+                        ctx.request.toByteArray(this), "SDP_OUTGOING")
+                legalArchiveLogger.archiveDocumentLogOnException(conversationId, "DIFI meldingsformidler", "NAV",
+                        ctx.response.toByteArray(this), "SDP_OUTGOING_RECEIPT")
+            }
         }
         return true
     }

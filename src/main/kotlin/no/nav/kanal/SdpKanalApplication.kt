@@ -54,7 +54,8 @@ fun createCamelContext(
         config: SdpConfiguration,
         sdpKeys: SdpKeys,
         mqConnection: ConnectionFactory,
-        sftpChannel: ChannelSftp
+        sftpChannel: ChannelSftp,
+        legalArchiveLogger: LegalArchiveLogger
 ): DefaultCamelContext = DefaultCamelContext().apply {
     val jmsConfig = createJmsConfig(mqConnection, config.mqConcurrentConsumers)
     val session = mqConnection.createConnection().apply {
@@ -77,7 +78,7 @@ fun createCamelContext(
     val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
     val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
 
-    val ebmsSender = EbmsSender(EbmsEndpointUriBuilder.statiskUri(URI(config.ebmsEndpointUrl)), sdpKeys, receiver)
+    val ebmsSender = EbmsSender(EbmsEndpointUriBuilder.statiskUri(URI(config.ebmsEndpointUrl)), sdpKeys, receiver, legalArchiveLogger)
     val ebmsPull = EbmsPull(receiver, ebmsSender)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, datahandler, receiver, ebmsSender)
     val backoutReason = BackoutReason()
@@ -116,8 +117,9 @@ fun main(args: Array<String>) {
     jschSession.connect()
     val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
     sftpChannel.connect()
+    val legalArchiveLogger = LegalArchiveLogger("TODO", vaultCredentials.serviceuserUsername, vaultCredentials.serviceuserPassword)
 
-    val camelContext = createCamelContext(config, sdpKeys, mqConnection, sftpChannel)
+    val camelContext = createCamelContext(config, sdpKeys, mqConnection, sftpChannel, legalArchiveLogger)
     camelContext.start()
 
     runBlocking {

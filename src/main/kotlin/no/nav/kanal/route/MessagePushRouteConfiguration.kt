@@ -12,6 +12,7 @@ import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.jms.JmsEndpoint
+import org.apache.camel.processor.RedeliveryPolicy
 
 fun CamelContext.createDeadLetterRoute(
         routeName: String,
@@ -42,6 +43,10 @@ fun CamelContext.createSendRoute(
                 .id(routeName)
                 .setHeader(PRIORITY_HEADER) { priority }
                 .setHeader(MPC_ID_HEADER) { mpcId }
+                //.errorHandler(deadLetterChannel("direct:$backoutRoute")
+                //        .useOriginalMessage()
+                //        .maximumRedeliveries(5)
+                //        .redeliveryDelay(5000))
                 .onException(Exception::class.java).handled(true).to("direct:$backoutRoute")
                 .end()
                 .process(XmlExtractor())

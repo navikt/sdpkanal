@@ -1,11 +1,16 @@
 package no.nav.kanal.ebms
 
+import kotlinx.coroutines.runBlocking
 import no.digipost.api.handlers.EbmsContextAware
+import no.nav.kanal.LegalArchiveLogger
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.ws.WebServiceMessage
 import org.springframework.ws.client.core.WebServiceMessageExtractor
 import org.springframework.ws.soap.SoapMessage
 import org.w3c.dom.Node
 import org.w3c.dom.NodeList
+import toByteArray
 import java.io.ByteArrayOutputStream
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -13,13 +18,14 @@ import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
-import javax.xml.xpath.XPath
-import javax.xml.xpath.XPathFactory
 
 private const val NO_MESSAGE_AVAILABLE_FROM_MPC_ERROR_CODE = "EBMS:0006"
 
 private val tf: TransformerFactory = TransformerFactory.newInstance()
-class EbmsReceiptExtractor : EbmsContextAware(), WebServiceMessageExtractor<EbmsReceipt?> {
+const val EVENT_TYPE = "INCOMING_RECEIPT"
+class EbmsReceiptExtractor(val legalArchiveLogger:  LegalArchiveLogger) : EbmsContextAware(), WebServiceMessageExtractor<EbmsReceipt?> {
+
+    val log: Logger = LoggerFactory.getLogger(EbmsReceiptExtractor::class.java)
     override fun extractData(message: WebServiceMessage?): EbmsReceipt? =
             if (ebmsContext.warning != null && ebmsContext.warning.errorCode == NO_MESSAGE_AVAILABLE_FROM_MPC_ERROR_CODE) {
                 null
@@ -36,6 +42,9 @@ class EbmsReceiptExtractor : EbmsContextAware(), WebServiceMessageExtractor<Ebms
                         ?.childNodes?.find("Scope")
                         ?.childNodes?.find("InstanceIdentifier")
                         ?.firstChild?.nodeValue
+                runBlocking {
+                    legalArchiveLogger.archiveDocumentLogOnException(conversationId!!, "NAV", "DIFI meldingsformidler", message.toByteArray(this), EVENT_TYPE)
+                }
                 Files.newOutputStream(Paths.get("receipt_$conversationId.bin")).use { message.writeTo(it) }
                 EbmsReceipt(
                         sbdBytes = ByteArrayOutputStream().use {

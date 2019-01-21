@@ -6,9 +6,21 @@ import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.timeout
 import com.nhaarman.mockitokotlin2.verify
+import com.nhaarman.mockitokotlin2.whenever
+import io.ktor.application.call
+import io.ktor.application.install
+import io.ktor.features.ContentNegotiation
+import io.ktor.jackson.jackson
+import io.ktor.response.respond
+import io.ktor.routing.post
+import io.ktor.routing.routing
+import io.ktor.server.cio.CIO
+import io.ktor.server.engine.embeddedServer
 import no.difi.begrep.sdp.schema_v10.SDPKvittering
 import no.difi.begrep.sdp.schema_v10.SDPMelding
 import no.digipost.api.representations.EbmsOutgoingMessage
+import no.nav.kanal.ArchiveResponse
+import no.nav.kanal.LegalArchiveLogger
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
@@ -35,6 +47,7 @@ import java.nio.file.Files
 import java.nio.file.Paths
 import java.util.Base64
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import javax.jms.BytesMessage
 import javax.jms.ConnectionFactory
@@ -43,9 +56,11 @@ import javax.naming.InitialContext
 import javax.xml.bind.JAXBContext
 import kotlin.concurrent.write
 
-val sdpMockPort: Int = ServerSocket(0).use {
+fun randomPort() = ServerSocket(0).use {
     it.localPort
 }
+val sdpMockPort: Int = randomPort()
+val legalArchiveMockPort = randomPort()
 
 open class QueuedReceiptHandler : SbdHandler {
     val receipts: MutableMap<String, EbmsResponse> = mutableMapOf()
@@ -110,6 +125,22 @@ object SdpKanalITSpek : Spek({
             receiptPollIntervalNormal = 1000
     )
     val vaultCredentials: VaultCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/vault.json"))
+
+    val requestMock = mock<() -> Any>()
+
+    // TODO: Use mock engine whenever it supports JSON
+    val legalArchiveMock = embeddedServer(CIO, port = legalArchiveMockPort) {
+        install(ContentNegotiation) {
+            jackson {  }
+        }
+        routing {
+            post("/upload") {
+                call.respond(requestMock())
+            }
+        }
+    }.start()
+
+    val legalArchiveLogger = LegalArchiveLogger("http://localhost:$legalArchiveMockPort/upload", "user", "pass")
     val sftpChannel = mock(ChannelSftp::class)
 
     val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
@@ -118,7 +149,7 @@ object SdpKanalITSpek : Spek({
     val queueConnection = connectionFactory.createConnection()
     queueConnection.start()
 
-    val camelContext = createCamelContext(config, sdpKeys, connectionFactory, sftpChannel)
+    val camelContext = createCamelContext(config, sdpKeys, connectionFactory, sftpChannel, legalArchiveLogger)
     camelContext.start()
 
     val session = queueConnection.createSession()
@@ -140,10 +171,12 @@ object SdpKanalITSpek : Spek({
     }
 
     afterEachTest {
-        reset(requestHandler)
+        reset(requestHandler, requestMock)
+        whenever(requestMock()).thenReturn(ArchiveResponse(id = 0))
     }
 
     afterGroup {
+        legalArchiveMock.stop(10, 10, TimeUnit.SECONDS)
         camelContext.shutdown()
         queueConnection.close()
         shutdownServer()
@@ -258,6 +291,12 @@ object SdpKanalITSpek : Spek({
             camelContext.start()
 
             sdpServer = initSdpServer()
+        }
+    }
+
+    describe("Legal Archive logging") {
+        it("Message should go through even regardless of message being logged to legal archive") {
+
         }
     }
 })

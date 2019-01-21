@@ -21,7 +21,7 @@ val jsr181Version = "1.0-MR1"
 val jtaApiVersion = "1.1"
 val kluentVersion = "1.43"
 val konfigVersion = "1.6.10.0"
-val ktorVersion = "1.0.0"
+val ktorVersion = "1.1.1"
 val logbackLogstashVersion = "5.2"
 val logbackVersion = "1.2.3"
 val mqVersion = "9.1.0.0"
@@ -45,6 +45,7 @@ repositories {
     mavenLocal()
     mavenCentral()
     jcenter()
+    maven { url = uri("https://kotlin.bintray.com/kotlinx") }
     maven { url = uri("https://dl.bintray.com/kotlin/ktor") }
     maven { url = uri("https://dl.bintray.com/spekframework/spek-dev") }
 }
@@ -82,6 +83,9 @@ dependencies {
     implementation("io.prometheus:simpleclient_hotspot:$prometheusVersion")
     implementation("io.prometheus:simpleclient_common:$prometheusVersion")
     implementation("io.ktor:ktor-server-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-jackson:$ktorVersion")
+    implementation("io.ktor:ktor-client-auth:$ktorVersion")
     implementation("javax.transaction:jta:$jtaApiVersion")
     //implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
@@ -131,4 +135,6 @@ dependencies {
     testImplementation("org.apache.activemq:artemis-jms-client:$artemisVersion")
     testImplementation("org.apache.wss4j:wss4j-ws-security-dom:$wss4jVersion")
     testImplementation("org.apache.wss4j:wss4j-ws-security-common:$wss4jVersion")
+    testImplementation("io.ktor:ktor-client-mock-jvm:$ktorVersion")
+    testImplementation("io.ktor:ktor-jackson:$ktorVersion")
 }

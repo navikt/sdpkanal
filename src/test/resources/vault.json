@@ -7,5 +7,7 @@
   "truststorePassword":"changeit",
   "truststoreType": "PKCS12",
   "sftpUsername":"sftpuser",
-  "sftpKeyPassword":"secure"
+  "sftpKeyPassword":"secure",
+  "serviceuserUsername": "srvit",
+  "serviceuserPassword": "secure"
 }

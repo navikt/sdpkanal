@@ -23,6 +23,7 @@ import no.digipost.api.interceptors.EbmsReferenceValidatorInterceptor
 import no.digipost.api.interceptors.RemoveContentLengthInterceptor
 import no.digipost.api.interceptors.TransactionLogClientInterceptor
 import no.digipost.api.interceptors.WsSecurityInterceptor
+import no.nav.kanal.LegalArchiveLogger
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.interceptor.LegalArchiveLoggingInterceptor
 import org.apache.http.impl.client.HttpClientBuilder
@@ -35,6 +36,7 @@ class EbmsSender(
         private val uri: EbmsEndpointUriBuilder,
         sdpKeys: SdpKeys,
         receiver: EbmsAktoer,
+        private val legalArchiveLogger: LegalArchiveLogger,
         private val jaxb2Marshaller: Jaxb2Marshaller = Marshalling.getMarshallerSingleton(),
         private val signer: SdpMeldingSigner = SdpMeldingSigner(sdpKeys.keypair.keyStoreInfo, jaxb2Marshaller)
 ) {
@@ -47,7 +49,7 @@ class EbmsSender(
             TransactionLogClientInterceptor(jaxb2Marshaller).apply {
                 setTransaksjonslogg(EbmsTransactionLogger())
             },
-            LegalArchiveLoggingInterceptor()
+            LegalArchiveLoggingInterceptor(legalArchiveLogger)
     )
     private val messageSender = HttpComponentsMessageSender(HttpClientBuilder.create()
             .addInterceptorFirst(RemoveContentLengthInterceptor()).build())
@@ -69,7 +71,7 @@ class EbmsSender(
         previousConfirmableReceipt: KanBekreftesSomBehandletKvittering? = null
     ): EbmsReceipt? {
         val pullRequest = PullRequestSender(ebmsPullRequest, jaxb2Marshaller, previousConfirmableReceipt)
-        return messageTemplate.sendAndReceive(uri.baseUri.toString(), pullRequest, EbmsReceiptExtractor())
+        return messageTemplate.sendAndReceive(uri.baseUri.toString(), pullRequest, EbmsReceiptExtractor(legalArchiveLogger))
     }
 
     fun confirmReceipt(confirmableReceipt: KanBekreftesSomBehandletKvittering) {
