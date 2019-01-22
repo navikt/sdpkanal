@@ -57,7 +57,7 @@ fun createCamelContext(
         config: SdpConfiguration,
         sdpKeys: SdpKeys,
         mqConnection: ConnectionFactory,
-        sftpChannel: ChannelSftp,
+        sftpConnectionPool: ConnectionPool<ChannelSftp>,
         legalArchiveLogger: LegalArchiveLogger
 ): DefaultCamelContext = DefaultCamelContext().apply {
     val jmsConfig = createJmsConfig(mqConnection, config.mqConcurrentConsumers)
@@ -85,7 +85,7 @@ fun createCamelContext(
     val ebmsPull = EbmsPull(receiver, ebmsSender)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, datahandler, receiver, ebmsSender)
     val backoutReason = BackoutReason()
-    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpChannel, config.documentDirectory)
+    val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpConnectionPool, config.documentDirectory)
 
     shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = config.shutdownTimeout }
     disableJMX()
@@ -122,11 +122,14 @@ fun main(args: Array<String>) {
         setKnownHosts(config.knownHostsFile)
     }.getSession(vaultCredentials.sftpUsername, config.sftpUrl)
     jschSession.connect()
-    val sftpChannel = jschSession.openChannel("sftp") as ChannelSftp
-    sftpChannel.connect()
+    val sftpConnectionPool = ConnectionPool({
+        (jschSession.openChannel("sftp") as ChannelSftp).apply {
+            connect()
+        }
+    }, { it.disconnect() })
     val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, vaultCredentials.serviceuserUsername, vaultCredentials.serviceuserPassword)
 
-    val camelContext = createCamelContext(config, sdpKeys, mqConnection, sftpChannel, legalArchiveLogger)
+    val camelContext = createCamelContext(config, sdpKeys, mqConnection, sftpConnectionPool, legalArchiveLogger)
     camelContext.start()
 
     runBlocking {

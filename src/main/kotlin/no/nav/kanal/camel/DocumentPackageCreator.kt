@@ -11,6 +11,7 @@ import no.difi.sdp.client2.domain.Sertifikat
 import no.difi.sdp.client2.internal.CreateCMSDocument
 import no.digipost.api.representations.Dokumentpakke
 import no.digipost.api.xml.Schemas
+import no.nav.kanal.ConnectionPool
 import no.nav.kanal.SdpPayload
 import no.nav.kanal.config.SdpKeys
 import org.apache.camel.Exchange
@@ -27,7 +28,7 @@ const val ATTACHMENT_COUNT_HEADER = "attachment_count_header"
 
 class DocumentPackageCreator constructor(
         private val sdpKeys: SdpKeys,
-        private val sftpChannel: ChannelSftp,
+        private val sftpConnectionPool: ConnectionPool<ChannelSftp>,
         private val documentDirectory: String
 ) : Processor {
     val log: Logger = LoggerFactory.getLogger(DocumentPackageCreator::class.java)
@@ -87,18 +88,21 @@ class DocumentPackageCreator constructor(
         const val DOCUMENT_PACKAGE = "DOCUMENT_PACKAGE"
     }
 
-    private fun SDPDokument.toAttachable() = SDPDokumentAsicEWrapper(this, sftpChannel, documentDirectory)
+    private fun SDPDokument.toAttachable() = SDPDokumentAsicEWrapper(this, sftpConnectionPool, documentDirectory)
 
     class SDPDokumentAsicEWrapper(
         private val sdpDokument: SDPDokument,
-        sftpChannel: ChannelSftp,
+        connectionPool: ConnectionPool<ChannelSftp>,
         documentDirectory: String
     ) : AsicEAttachable {
         private val log = LoggerFactory.getLogger(SDPDokumentAsicEWrapper::class.java)
         private val documentBytes: ByteArray = ByteArrayOutputStream().use {
             val filePath = documentDirectory + sdpDokument.href
             log.info("Trying to download file $filePath")
-            sftpChannel.get(filePath, it)
+
+            connectionPool.blocking { sftpChannel ->
+                sftpChannel.get(filePath, it)
+            }
             it
         }.toByteArray()
 

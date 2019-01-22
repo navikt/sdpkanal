@@ -20,6 +20,7 @@ import no.difi.begrep.sdp.schema_v10.SDPKvittering
 import no.difi.begrep.sdp.schema_v10.SDPMelding
 import no.digipost.api.representations.EbmsOutgoingMessage
 import no.nav.kanal.ArchiveResponse
+import no.nav.kanal.ConnectionPool
 import no.nav.kanal.LegalArchiveLogger
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
@@ -142,7 +143,6 @@ object SdpKanalITSpek : Spek({
     }.start()
 
     val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, "user", "pass")
-    val sftpChannel = mock(ChannelSftp::class)
 
     val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
 
@@ -150,7 +150,8 @@ object SdpKanalITSpek : Spek({
     val queueConnection = connectionFactory.createConnection()
     queueConnection.start()
 
-    val camelContext = createCamelContext(config, sdpKeys, connectionFactory, sftpChannel, legalArchiveLogger)
+    val connectionPool = ConnectionPool({ mock(ChannelSftp::class) }, {})
+    val camelContext = createCamelContext(config, sdpKeys, connectionFactory, connectionPool, legalArchiveLogger)
     camelContext.start()
 
     val session = queueConnection.createSession()
