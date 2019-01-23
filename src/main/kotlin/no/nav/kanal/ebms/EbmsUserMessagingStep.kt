@@ -71,6 +71,7 @@ class EbmsUserMessagingStep(
     private fun createPartInfo(requestMessage: SoapMessage): List<PartInfo> = mutableListOf<PartInfo>().apply {
         requestMessage.attachments.forEachRemaining { attachment ->
             val cid = "cid:${attachment.contentId.substring(1, attachment.contentId.length - 1)}"
+            add(PartInfo())
             add(PartInfo()
                     .withHref(cid)
                     .withPartProperties(PartProperties()
