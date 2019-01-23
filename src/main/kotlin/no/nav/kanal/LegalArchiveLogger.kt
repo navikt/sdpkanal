@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.engine.apache.Apache
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.features.auth.Auth
 import io.ktor.client.features.auth.providers.basic
@@ -37,7 +38,7 @@ class LegalArchiveLogger(
         val legalArchiveUrl: String,
         username: String, password:
         String, clientConfiguration:
-        HttpClientEngine = CIO.create()
+        HttpClientEngine = Apache.create {  }
 ) {
     val log: Logger = LoggerFactory.getLogger(LegalArchiveLogger::class.java)
     val client = HttpClient(clientConfiguration) {
