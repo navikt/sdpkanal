@@ -5,9 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.apache.Apache
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.features.auth.Auth
-import io.ktor.client.features.auth.providers.basic
+import io.ktor.client.features.auth.basic.BasicAuth
 import io.ktor.client.features.json.JacksonSerializer
 import io.ktor.client.features.json.JsonFeature
 import io.ktor.client.request.post
@@ -16,9 +14,11 @@ import io.ktor.http.contentType
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import net.logstash.logback.argument.StructuredArguments
+import org.apache.http.HttpHost
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.lang.Exception
+import java.util.Base64
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 data class ArchiveRequest(
@@ -35,21 +35,19 @@ data class ArchiveResponse(
 )
 
 class LegalArchiveLogger(
-        val legalArchiveUrl: String,
-        username: String, password:
-        String, clientConfiguration:
-        HttpClientEngine = Apache.create {  }
+    val legalArchiveUrl: String,
+    legalArchiveUsername: String,
+    legalArchivePassword: String,
+    clientConfiguration: HttpClientEngine = Apache.create {  }
 ) {
     val log: Logger = LoggerFactory.getLogger(LegalArchiveLogger::class.java)
     val client = HttpClient(clientConfiguration) {
+        install(BasicAuth) {
+            this.username = legalArchiveUsername
+            this.password = legalArchivePassword
+        }
         install(JsonFeature) {
             serializer = JacksonSerializer()
-        }
-        install(Auth) {
-            basic {
-                this.username = username
-                this.password = password
-            }
         }
     }
     suspend fun archiveDocument(archiveRequest: ArchiveRequest): ArchiveResponse = client.post(legalArchiveUrl) {

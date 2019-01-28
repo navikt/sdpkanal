@@ -21,7 +21,7 @@ val jsr181Version = "1.0-MR1"
 val jtaApiVersion = "1.1"
 val kluentVersion = "1.43"
 val konfigVersion = "1.6.10.0"
-val ktorVersion = "1.1.1"
+val ktorVersion = "1.1.2"
 val logbackLogstashVersion = "5.2"
 val logbackVersion = "1.2.3"
 val mqVersion = "9.1.0.0"
@@ -86,7 +86,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-apache:$ktorVersion")
     implementation("io.ktor:ktor-client-jackson:$ktorVersion")
-    implementation("io.ktor:ktor-client-auth:$ktorVersion")
+    implementation("io.ktor:ktor-client-auth-basic:$ktorVersion")
     implementation("javax.transaction:jta:$jtaApiVersion")
     //implementation("javax.xml.ws:jaxws-api:$jaxwsApiVersion")
     implementation("no.difi.sdp:sikker-digital-post-klient-java:$sdpClientVersion") {
