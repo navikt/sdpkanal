@@ -15,5 +15,5 @@ class SdpKeys constructor(
     val truststore: KeyStore = KeyStore.getInstance(credentials.truststoreType).apply {
         load(Base64.getDecoder().wrap(FileInputStream(truststorePath)), credentials.truststorePassword.toCharArray())
     }
-    val keypair: Noekkelpar = Noekkelpar.fraKeyStoreUtenTrustStore(keystore, credentials.virksomhetKeystoreAlias, credentials.virksomhetKeystorePassword)
+    val keypair: Noekkelpar = Noekkelpar.fraKeyStoreOgTrustStore(keystore, truststore, credentials.virksomhetKeystoreAlias, credentials.virksomhetKeystorePassword)
 }

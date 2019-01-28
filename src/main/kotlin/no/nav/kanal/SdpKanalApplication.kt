@@ -44,6 +44,8 @@ import java.util.concurrent.TimeUnit
 import javax.jms.ConnectionFactory
 import javax.jms.Session
 
+const val MPC_ID_HEADER: String = "MPC_ID"
+const val PRIORITY_HEADER: String = "PRIORITY"
 
 const val METRICS_NAMESPACE = "sdpkanal"
 const val SEND_NORMAL_ROUTE_NAME = "sendSDPNormal"

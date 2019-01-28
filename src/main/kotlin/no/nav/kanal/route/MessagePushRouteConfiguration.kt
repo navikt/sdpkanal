@@ -1,18 +1,17 @@
 package no.nav.kanal.route
 
 import no.digipost.api.representations.EbmsOutgoingMessage
+import no.nav.kanal.MPC_ID_HEADER
+import no.nav.kanal.PRIORITY_HEADER
 import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.XmlExtractor
 import no.nav.kanal.camel.EbmsPush
 import no.nav.kanal.camel.MetadataExtractor
 import no.nav.kanal.camel.SdpPriceStatisticsCollector
-import no.nav.kanal.config.MPC_ID_HEADER
-import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.jms.JmsEndpoint
-import org.apache.camel.processor.RedeliveryPolicy
 
 fun CamelContext.createDeadLetterRoute(
         routeName: String,

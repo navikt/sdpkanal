@@ -7,9 +7,13 @@ import javax.xml.ws.soap.SOAPFaultException
 
 import no.difi.begrep.sdp.schema_v10.SDPDigitalPost
 import no.digipost.api.PMode
-import no.digipost.api.representations.*
+import no.digipost.api.representations.Dokumentpakke
+import no.digipost.api.representations.EbmsAktoer
+import no.digipost.api.representations.EbmsOutgoingMessage
+import no.digipost.api.representations.TransportKvittering
+import no.nav.kanal.MPC_ID_HEADER
+import no.nav.kanal.PRIORITY_HEADER
 import no.nav.kanal.SdpPayload
-import no.nav.kanal.config.*
 import no.nav.kanal.ebms.EbmsSender
 
 import org.apache.camel.Exchange
@@ -17,6 +21,7 @@ import org.apache.camel.Processor
 import org.apache.camel.RuntimeCamelException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import java.io.IOException
 
 class EbmsPush(
     private val maxRetries: Long,
@@ -38,25 +43,22 @@ class EbmsPush(
                 return
             } catch (e: Exception) {
                 log.error("Caught exception while trying to push message ${exchangeIn.loggingKeys()}",
-                        *exchangeIn.loggingValues(),
-                        e)
+                        *exchangeIn.loggingValues(), e)
                 throw e
             } catch (e: SOAPFaultException) {
                 log.error("Error during transmit ${exchangeIn.loggingKeys()}", *exchangeIn.loggingValues(), e.message)
-                // check if we should retry based on connection problems
+
                 if (isConnectionProblem(e)) {
                     if (retryNumber + 1 == maxRetries) {
                         throw RuntimeCamelException("Maximum retries reached and ClientException during push", e)
                     }
                     log.warn("Failed to send message to meldingsformidler, waiting $retryInterval ms ${exchangeIn.loggingKeys()}",
-                            *exchangeIn.loggingValues(),
-                            e)
+                            *exchangeIn.loggingValues(), e)
                     Thread.sleep(retryInterval)
                 } else {
                     log.error("Exception caught is not marked as a temporary problem ${exchangeIn.loggingKeys()}",
-                            *exchangeIn.loggingValues(),
-                            e)
-                    throw RuntimeCamelException("ClientException during push: " + e.message, e)
+                            *exchangeIn.loggingValues(), e)
+                    throw RuntimeCamelException("ClientException during push: ${e.message}", e)
                 }
             }
         }
@@ -82,9 +84,8 @@ class EbmsPush(
         for (i in 0.until(3)) {
             if (cause == null)
                 return false
-            if (cause is ConnectException || cause is UnknownHostException) {
+            if (cause is IOException)
                 return true
-            }
             cause = cause.cause
         }
         return false

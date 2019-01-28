@@ -3,10 +3,10 @@ package no.nav.kanal.route
 import io.prometheus.client.Summary
 import no.digipost.api.representations.EbmsOutgoingMessage
 import no.nav.kanal.METRICS_NAMESPACE
+import no.nav.kanal.MPC_ID_HEADER
+import no.nav.kanal.PRIORITY_HEADER
 import no.nav.kanal.camel.EbmsPull
 import no.nav.kanal.camel.header
-import no.nav.kanal.config.MPC_ID_HEADER
-import no.nav.kanal.config.PRIORITY_HEADER
 import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.component.jms.JmsEndpoint

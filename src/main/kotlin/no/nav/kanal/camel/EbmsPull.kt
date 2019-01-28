@@ -3,8 +3,8 @@ package no.nav.kanal.camel
 import net.logstash.logback.argument.StructuredArguments.keyValue
 import no.digipost.api.representations.EbmsAktoer
 import no.digipost.api.representations.EbmsPullRequest
-import no.nav.kanal.config.MPC_ID_HEADER
-import no.nav.kanal.config.PRIORITY_HEADER
+import no.nav.kanal.MPC_ID_HEADER
+import no.nav.kanal.PRIORITY_HEADER
 import no.nav.kanal.ebms.EbmsSender
 import org.apache.camel.Exchange
 import org.apache.camel.Processor
