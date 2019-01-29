@@ -15,8 +15,8 @@ class MetadataExtractor : Processor {
     override fun process(exchange: Exchange) {
         val sbd = exchange.getIn().getHeader(XmlExtractor.SDP_PAYLOAD, SdpPayload::class.java).standardBusinessDocument
 
-        val messageId = sbd.standardBusinessDocumentHeader.businessScope.scopes.first().instanceIdentifier
-        val conversationId = sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier
+        val messageId = sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier
+        val conversationId = sbd.standardBusinessDocumentHeader.businessScope.scopes.first().instanceIdentifier
         exchange.getIn().setHeader(MESSAGE_ID_HEADER, messageId)
         exchange.getIn().setHeader(CONVERSATION_ID_HEADER, conversationId)
         val loggingValues = arrayOf(
