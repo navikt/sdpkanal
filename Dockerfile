@@ -1,7 +1,7 @@
 FROM navikt/java:11
 
 ENV NO_NAV_SDPKANAL_KEYSTORE=/var/run/secrets/nais.io/virksomhetssertifikat/key.p12.b64
-ENV NO_NAV_SDPKANAL_KEYSTORE_CREDENTIALS=/var/run/secrets/virksomhetssertifikat/credentials.json
+ENV NO_NAV_SDPKANAL_KEYSTORE_CREDENTIALS=/var/run/secrets/nais.io/virksomhetssertifikat/credentials.json
 
 ENV NO_NAV_SDPKANAL_DOKUMENT_PATH_PREFIX='/q1/dokumentdistribusjon/documentFileshare/'
 ENV NO_NAV_SDPKANAL_TRUSTSTORE=/var/run/secrets/nais.io/vault/truststore.jks.b64
