@@ -26,6 +26,7 @@ import no.nav.kanal.camel.EbmsPush
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
+import no.nav.kanal.config.VirksomhetssertifikatCredentials
 import no.nav.kanal.config.createConnectionFactory
 import no.nav.kanal.config.createJmsConfig
 import no.nav.kanal.ebms.EbmsSender
@@ -109,13 +110,14 @@ fun main(args: Array<String>) {
 
     val config = SdpConfiguration()
     val vaultCredentials: VaultCredentials = objectMapper.readValue(File(config.credentialsPath))
+    val virksomhetssertifikatCredentials: VirksomhetssertifikatCredentials = objectMapper.readValue(File(config.keystoreCredentialsPath))
 
     System.setProperty("javax.xml.soap.SAAJMetaFactory", "com.sun.xml.messaging.saaj.soap.SAAJMetaFactoryImpl")
     System.setProperty("javax.net.ssl.keyStore", "/tmp/srvsdpkanal.jks")
     System.setProperty("javax.net.ssl.keyStoreType", "jks")
     System.setProperty("javax.net.ssl.keyStorePassword", vaultCredentials.applicationCertificatePassword)
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials)
 
     val mqConnection = createConnectionFactory(config.mqHostname, config.mqPort, config.mqQueueManager, config.mqChannel, vaultCredentials)
 

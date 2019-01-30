@@ -28,6 +28,7 @@ data class SdpConfiguration(
         val ebmsEndpointUrl: String = config["ebms.msh.url"],
         val credentialsPath: String = config["no.nav.sdpkanal.credentialsPath"],
         val keystorePath: String = config["no.nav.sdpkanal.keystore"],
+        val keystoreCredentialsPath: String = config["no.nav.sdpkanal.keystore.credentials"],
         val truststorePath: String = config["no.nav.sdpkanal.truststore"],
         val mqHostname: String = config["mqgateway04.hostname"],
         val mqPort: Int = config["mqgateway04.port"],

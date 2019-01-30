@@ -25,6 +25,7 @@ import no.nav.kanal.LegalArchiveLogger
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
+import no.nav.kanal.config.VirksomhetssertifikatCredentials
 import no.nav.kanal.createCamelContext
 import no.nav.kanal.objectMapper
 import org.amshove.kluent.any
@@ -108,6 +109,7 @@ object SdpKanalITSpek : Spek({
     var sdpServer = initSdpServer()
 
     val vaultCredentials: VaultCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/vault.json"))
+    val virksomhetssertifikatCredentials: VirksomhetssertifikatCredentials = objectMapper.readValue(VaultCredentials::class.java.getResourceAsStream("/virksomhet.json"))
     val config = SdpConfiguration(
             knownHostsFile = "TODO",
             ebmsEndpointUrl = "http://localhost:$sdpMockPort/sdpmock",
@@ -122,6 +124,7 @@ object SdpKanalITSpek : Spek({
             receiptQueueNormal = "sdp_receipt_normal",
             receiptQueuePriority = "sdp_receipt_priority",
             keystorePath = "build/keystore.p12.b64",
+            keystoreCredentialsPath = "UNUSED",
             truststorePath = "build/keystore.p12.b64",
             mqConcurrentConsumers = 4,
             receiptPollIntervalNormal = 1000,
@@ -144,7 +147,7 @@ object SdpKanalITSpek : Spek({
 
     val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, "user", "pass")
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, vaultCredentials)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials)
 
     val connectionFactory = InitialContext().lookup("ConnectionFactory") as ConnectionFactory
     val queueConnection = connectionFactory.createConnection()

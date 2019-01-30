@@ -8,12 +8,12 @@ import java.util.Base64
 class SdpKeys constructor(
         keystorePath: String,
         truststorePath: String,
-        credentials: VaultCredentials) {
-    val keystore: KeyStore = KeyStore.getInstance(credentials.virksomhetKeystoreType).apply {
-        load(Base64.getDecoder().wrap(FileInputStream(keystorePath)), credentials.virksomhetKeystorePassword.toCharArray())
+        credentials: VirksomhetssertifikatCredentials) {
+    val keystore: KeyStore = KeyStore.getInstance(credentials.format).apply {
+        load(Base64.getDecoder().wrap(FileInputStream(keystorePath)), credentials.password.toCharArray())
     }
-    val truststore: KeyStore = KeyStore.getInstance(credentials.truststoreType).apply {
-        load(Base64.getDecoder().wrap(FileInputStream(truststorePath)), credentials.truststorePassword.toCharArray())
+    val truststore: KeyStore = KeyStore.getInstance(credentials.format).apply {
+        load(Base64.getDecoder().wrap(FileInputStream(truststorePath)), credentials.password.toCharArray())
     }
-    val keypair: Noekkelpar = Noekkelpar.fraKeyStoreOgTrustStore(keystore, truststore, credentials.virksomhetKeystoreAlias, credentials.virksomhetKeystorePassword)
+    val keypair: Noekkelpar = Noekkelpar.fraKeyStoreOgTrustStore(keystore, truststore, credentials.alias, credentials.password)
 }

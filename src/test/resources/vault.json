@@ -1,9 +1,6 @@
 {
   "mqUsername":"app",
   "mqPassword":"secure",
-  "virksomhetKeystorePassword":"changeit",
-  "virksomhetKeystoreAlias":"app-key",
-  "virksomhetKeystoreType":"PKCS12",
   "truststorePassword":"changeit",
   "truststoreType": "PKCS12",
   "sftpUsername":"sftpuser",

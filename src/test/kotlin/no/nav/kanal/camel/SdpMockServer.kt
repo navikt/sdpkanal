@@ -329,7 +329,7 @@ fun createSDPMockServer(sbdHandler: SbdHandler = DefaultSbdHandler, port: Int = 
     val sfb = JaxWsServerFactoryBean().apply {
         serviceBean = Soap(sbdHandler, keyStore)
         address = "http://localhost:$port/sdpmock"
-        features.add(LoggingFeature())
+        //features.add(LoggingFeature())
     }
     return SdpServer(sfb.create().apply {
         endpoint.apply {
