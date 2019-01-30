@@ -38,7 +38,7 @@ spec:
       - mountPath: /var/run/secrets/nais.io/virksomhetssertifikat
         kvPath: {{SDP_VIRKSOMHETSSERTIFIKAT_VAULT_PATH}}
       - mountPath: /var/run/secrets/nais.io/vault
-        kvPath: /kv/preprod/fss/default/sdpkanal
+        kvPath: {{SDP_CREDENTIALS_VAULT_PATH}}
   env:
     - name: MQGATEWAY04_HOSTNAME
       value: {{MQGATEWAY04_HOSTNAME}}
