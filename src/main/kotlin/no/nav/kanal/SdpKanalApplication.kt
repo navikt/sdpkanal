@@ -117,7 +117,7 @@ fun main(args: Array<String>) {
     System.setProperty("javax.net.ssl.keyStoreType", "jks")
     System.setProperty("javax.net.ssl.keyStorePassword", vaultCredentials.applicationCertificatePassword)
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials)
 
     val mqConnection = createConnectionFactory(config.mqHostname, config.mqPort, config.mqQueueManager, config.mqChannel, vaultCredentials)
 

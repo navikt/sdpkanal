@@ -147,7 +147,7 @@ object SdpKanalITSpek : Spek({
 
     val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, "user", "pass")
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials)
 
     val connectionFactory = InitialContext().lookup("ConnectionFactory") as ConnectionFactory
     val queueConnection = connectionFactory.createConnection()
