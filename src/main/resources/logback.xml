@@ -10,5 +10,6 @@
         <appender-ref ref="STDOUT"/>
     </root>
 
+    <logger name="org.apache.wss4j.dom.processor.SignatureProcessor" level="DEBUG" />
     <logger name="no.nav" level="INFO"/>
 </configuration>

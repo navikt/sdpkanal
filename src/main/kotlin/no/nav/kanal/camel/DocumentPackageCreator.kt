@@ -72,6 +72,10 @@ class DocumentPackageCreator constructor(
         val archive = createZip.zipIt(files)
 
         val certificate = Sertifikat.fraByteArray(base64Decoder.decode(sdpPayload.certificate))
+
+        // Fail before sending if the encryption certificate is revoked/expired/signed by an unknown entity
+        sdpKeys.validateCertificate(certificate.x509Certificate)
+
         val encryptedASiCE = createCMSDocument.createCMS(archive.bytes, certificate)
         log.info("Encrypted package with {} bytes, is now {}, used certificate {} ${exchange.loggingKeys()}",
                 archive.bytes.size,

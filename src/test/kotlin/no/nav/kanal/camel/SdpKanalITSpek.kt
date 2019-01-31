@@ -47,6 +47,7 @@ import java.io.StringReader
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.security.interfaces.RSAPrivateKey
 import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -147,7 +148,12 @@ object SdpKanalITSpek : Spek({
 
     val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, "user", "pass")
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials, validateRevocation = false)
+
+    val certBytes = sdpKeys.truststore.getCertificate("posten").encoded
+    // Certificates are double base64 encoded
+    val certB64 = Base64.getEncoder().encode(certBytes)
+    val appCert = Base64.getEncoder().encodeToString(certB64)
 
     val connectionFactory = InitialContext().lookup("ConnectionFactory") as ConnectionFactory
     val queueConnection = connectionFactory.createConnection()
@@ -199,7 +205,7 @@ object SdpKanalITSpek : Spek({
             .create()*/
 
     fun genPayload(conversationId: String = UUID.randomUUID().toString()): String =
-            messageBytes.toString(Charsets.UTF_8).replace("CONV_ID", conversationId)
+            messageBytes.toString(Charsets.UTF_8).replace("CONV_ID", conversationId).replace("B64_CERTIFICATE", appCert)
 
     describe("Sending messages on the input queue") {
         listOf(normalQueueSender, priorityQueueSender).forEach {

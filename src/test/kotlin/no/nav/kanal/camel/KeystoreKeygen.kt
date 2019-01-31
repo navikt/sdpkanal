@@ -19,13 +19,23 @@ import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
 import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder
 import org.bouncycastle.crypto.util.PrivateKeyFactory
+import java.security.cert.X509Certificate
+
+data class X509KeyPair(
+        val certificate: X509Certificate,
+        val private: RSAPrivateKey,
+        val trustChain: Array<X509Certificate>
+)
 
 fun generateKeyStore() : KeyStore {
     Security.addProvider(BouncyCastleProvider())
     return KeyStore.getInstance("PKCS12").apply {
         load(null, null)
-        generateKeysFor(984661185, "posten", "Posten test certificate", this)
-        generateKeysFor(889640782, "app-key", "NAV test certificate", this)
+        val rootPair = generateKeysFor(12345, "Root certificate", "dn=Secure certificates root", this, null, false)
+        val intermediatePair = generateKeysFor(123456789, "Intermediate certificate", "dn=Secure certificates intermediate", this, rootPair, false)
+
+        println(generateKeysFor(984661185, "posten", "dn=Posten test certificate", this, intermediatePair).trustChain)
+        generateKeysFor(889640782, "app-key", "dn=NAV test certificate", this, intermediatePair)
 
         /*
          This is a workaround used for making the sikker digital post java client work.
@@ -33,33 +43,64 @@ fun generateKeyStore() : KeyStore {
          number of certificates in the truststore to validate if its the right one we need to add a few extra
          certificates and keys, this is not actually needed by the parts we use in sdpkanal
           */
-
-        generateKeysFor(1, "mock1", "dn=NAV test certificate", this)
-        generateKeysFor(2, "mock2", "dn=NAV test certificate", this)
-        generateKeysFor(3, "mock3", "dn=NAV test certificate", this)
+        generateKeysFor(1, "mock1", "dn=NAV test certificate", this, intermediatePair)
 
         aliases().toList().map { getCertificate(it) }.forEach { println(it) }
     }
 }
 
-fun generateKeysFor(orgNr: Long, alias: String, orgName: String, keystore: KeyStore) {
-
+fun generateKeysFor(
+        orgNr: Long,
+        alias: String,
+        orgName: String,
+        keystore: KeyStore,
+        signingPair: X509KeyPair?,
+        savePrivateKey: Boolean = true
+): X509KeyPair {
+    val dnString = "$orgName, SERIALNUMBER=$orgNr"
     val keygen = KeyPairGenerator.getInstance("RSA", "BC")
     keygen.initialize(2048)
     val keyPair = keygen.genKeyPair()
     val publicKey = keyPair.public as RSAPublicKey
     val privateKey = keyPair.private as RSAPrivateKey
-    val dn = X500Name("dn=$orgName, SERIALNUMBER=$orgNr")
+    val dn = X500Name(dnString)
+
+    val issuerDn = when(signingPair) {
+        null -> dn
+        else -> X500Name(signingPair.certificate.subjectDN.name)
+    }
+
+    val privateKeyAsymKeyParam = PrivateKeyFactory.createKey(when (signingPair) {
+        null -> privateKey
+        else -> signingPair.private
+    }.encoded)
+
     val validFrom = Date.from(ZonedDateTime.now().minusYears(1).toInstant())
     val validTo = Date.from(ZonedDateTime.now().plusYears(1).toInstant())
+
     val subjPubKeyInfo = SubjectPublicKeyInfo.getInstance(publicKey.encoded)
+
     val sigAlgId = DefaultSignatureAlgorithmIdentifierFinder().find("SHA1withRSA")
     val digAlgId = DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId)
-    val privateKeyAsymKeyParam = PrivateKeyFactory.createKey(privateKey.encoded)
+
     val sigGen = BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(privateKeyAsymKeyParam)
-    val certificateHolder = X509v3CertificateBuilder(dn, BigInteger.valueOf(orgNr), validFrom, validTo, dn, subjPubKeyInfo)
+
+    val certificateHolder = X509v3CertificateBuilder(issuerDn, BigInteger.valueOf(orgNr), validFrom, validTo, dn, subjPubKeyInfo)
             .addExtension(ASN1ObjectIdentifier("2.5.29.19"), true, BasicConstraints(true))
             .build(sigGen)
+
     val certificate = JcaX509CertificateConverter().setProvider("BC").getCertificate(certificateHolder)
-    keystore.setKeyEntry(alias, privateKey, "changeit".toCharArray(), arrayOf(certificate))
+
+    val trustChain = when(signingPair) {
+        null -> arrayOf(certificate)
+        else -> arrayOf(certificate, *signingPair.trustChain)
+    }
+
+    if (savePrivateKey) {
+        keystore.setKeyEntry(alias, privateKey, "changeit".toCharArray(), trustChain)
+    } else {
+        keystore.setCertificateEntry(alias, certificate)
+    }
+
+    return X509KeyPair(certificate, privateKey, trustChain)
 }
