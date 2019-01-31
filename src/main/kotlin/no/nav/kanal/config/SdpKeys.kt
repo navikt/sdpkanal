@@ -29,15 +29,15 @@ class SdpKeys constructor(
 
     @Throws(CertPathValidatorException::class, InvalidAlgorithmParameterException::class)
     fun validateVirksomhetssertifikat() {
-        validateCertificate(keypair.virksomhetssertifikat.x509Certificate)
+        validateCertificate(keypair.virksomhetssertifikat.x509Certificate, false)
     }
 
     @Throws(CertPathValidatorException::class, InvalidAlgorithmParameterException::class)
-    fun validateCertificate(certificate: Certificate) {
+    fun validateCertificate(certificate: Certificate, checkRevocation: Boolean = validateRevocation) {
         val cf = CertificateFactory.getInstance("X.509")
         val cp = cf.generateCertPath(listOf(certificate))
         val params = PKIXParameters(truststore).apply {
-            isRevocationEnabled = validateRevocation
+            isRevocationEnabled = checkRevocation
         }
         val cpv = CertPathValidator.getInstance(CertPathValidator.getDefaultType())
         cpv.validate(cp, params)
