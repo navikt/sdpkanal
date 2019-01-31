@@ -6,7 +6,6 @@ import java.security.InvalidAlgorithmParameterException
 import java.security.KeyStore
 import java.security.cert.Certificate
 import java.util.Base64
-import java.security.cert.PKIXCertPathValidatorResult
 import java.security.cert.CertPathValidator
 import java.security.cert.CertPathValidatorException
 import java.security.cert.CertificateFactory

@@ -34,7 +34,7 @@ fun generateKeyStore() : KeyStore {
         val rootPair = generateKeysFor(12345, "Root certificate", "dn=Secure certificates root", this, null, false)
         val intermediatePair = generateKeysFor(123456789, "Intermediate certificate", "dn=Secure certificates intermediate", this, rootPair, false)
 
-        println(generateKeysFor(984661185, "posten", "dn=Posten test certificate", this, intermediatePair).trustChain)
+        generateKeysFor(984661185, "posten", "dn=Posten test certificate", this, intermediatePair)
         generateKeysFor(889640782, "app-key", "dn=NAV test certificate", this, intermediatePair)
 
         /*
