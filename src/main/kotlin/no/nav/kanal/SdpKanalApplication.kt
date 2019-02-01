@@ -117,7 +117,7 @@ fun main(args: Array<String>) {
     System.setProperty("javax.net.ssl.keyStoreType", "jks")
     System.setProperty("javax.net.ssl.keyStorePassword", vaultCredentials.applicationCertificatePassword)
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials, config.sdpCheckRevocation)
 
     // Validate to check if the certificate is revoked or expired before starting up, this will make it impossible/hard
     // to deploy a version with a invalid certificate as the application wont start and the old one wont be stopped

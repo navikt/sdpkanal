@@ -14,11 +14,12 @@ import java.security.cert.PKIXParameters
 
 
 class SdpKeys constructor(
-        keystorePath: String,
-        truststorePath: String,
-        keystoreCredentials: VirksomhetssertifikatCredentials,
-        truststoreCredentials: VaultCredentials,
-        val validateRevocation: Boolean = true) {
+    keystorePath: String,
+    truststorePath: String,
+    keystoreCredentials: VirksomhetssertifikatCredentials,
+    truststoreCredentials: VaultCredentials,
+    val validateRevocation: Boolean
+) {
     val keystore: KeyStore = KeyStore.getInstance(keystoreCredentials.type).apply {
         load(Base64.getDecoder().wrap(FileInputStream(keystorePath)), keystoreCredentials.password.toCharArray())
     }
@@ -29,15 +30,15 @@ class SdpKeys constructor(
 
     @Throws(CertPathValidatorException::class, InvalidAlgorithmParameterException::class)
     fun validateVirksomhetssertifikat() {
-        validateCertificate(keypair.virksomhetssertifikat.x509Certificate, false)
+        validateCertificate(keypair.virksomhetssertifikat.x509Certificate)
     }
 
     @Throws(CertPathValidatorException::class, InvalidAlgorithmParameterException::class)
-    fun validateCertificate(certificate: Certificate, checkRevocation: Boolean = validateRevocation) {
+    fun validateCertificate(certificate: Certificate) {
         val cf = CertificateFactory.getInstance("X.509")
         val cp = cf.generateCertPath(listOf(certificate))
         val params = PKIXParameters(truststore).apply {
-            isRevocationEnabled = checkRevocation
+            isRevocationEnabled = validateRevocation
         }
         val cpv = CertPathValidator.getInstance(CertPathValidator.getDefaultType())
         cpv.validate(cp, params)

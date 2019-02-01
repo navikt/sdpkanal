@@ -129,7 +129,8 @@ object SdpKanalITSpek : Spek({
             truststorePath = "build/keystore.p12.b64",
             mqConcurrentConsumers = 4,
             receiptPollIntervalNormal = 1000,
-            legalArchiveUrl = "http://localhost:$legalArchiveMockPort/upload"
+            legalArchiveUrl = "http://localhost:$legalArchiveMockPort/upload",
+            sdpCheckRevocation = false
     )
 
     val requestMock = mock<() -> Any>()
@@ -148,7 +149,7 @@ object SdpKanalITSpek : Spek({
 
     val legalArchiveLogger = LegalArchiveLogger(config.legalArchiveUrl, "user", "pass")
 
-    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials, validateRevocation = false)
+    val sdpKeys = SdpKeys(config.keystorePath, config.truststorePath, virksomhetssertifikatCredentials, vaultCredentials, config.sdpCheckRevocation)
 
     val certBytes = sdpKeys.truststore.getCertificate("posten").encoded
     // Certificates are double base64 encoded

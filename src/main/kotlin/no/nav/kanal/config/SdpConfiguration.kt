@@ -6,6 +6,7 @@ import com.natpryce.konfig.ConfigurationProperties.Companion.systemProperties
 import com.natpryce.konfig.EnvironmentVariables
 import com.natpryce.konfig.Key
 import com.natpryce.konfig.Misconfiguration
+import com.natpryce.konfig.booleanType
 import com.natpryce.konfig.intType
 import com.natpryce.konfig.longType
 import com.natpryce.konfig.overriding
@@ -52,12 +53,14 @@ data class SdpConfiguration(
         val sftpUrl: String = config["no.nav.sdpkanal.sftp.url"],
         val sftpKeyPath: String = config["no.nav.sdpkanal.sftp.key.path"],
         val knownHostsFile: String = config["no.nav.sdpkanal.sftp.known.hosts"],
-        val shutdownTimeout: Long = config["no.nav.sdpkanal.shutdown.timeout"]
+        val shutdownTimeout: Long = config["no.nav.sdpkanal.shutdown.timeout"],
+        val sdpCheckRevocation: Boolean = config["sdp.check.revocation"]
 )
 
 inline operator fun <reified T> Configuration.get(key: String): T = when (T::class) {
     String::class -> this[Key(key, stringType)].replace("\${user.home}", System.getProperty("user.home")).replace("\${java.io.tmpdir}", System.getProperty("java.io.tmpdir")) as T
     Integer::class -> this[Key(key, intType)] as T
     Long::class -> this[Key(key, longType)] as T
+    Boolean::class -> this[Key(key, booleanType)] as T
     else -> throw RuntimeException("Unknown class type ${T::class}")
 }
