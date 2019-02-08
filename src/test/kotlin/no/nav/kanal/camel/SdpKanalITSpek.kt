@@ -130,7 +130,8 @@ object SdpKanalITSpek : Spek({
             mqConcurrentConsumers = 4,
             receiptPollIntervalNormal = 1000,
             legalArchiveUrl = "http://localhost:$legalArchiveMockPort/upload",
-            sdpCheckRevocation = false
+            sdpCheckRevocation = false,
+            sftpUrl = "UNUSED"
     )
 
     val requestMock = mock<() -> Any>()
