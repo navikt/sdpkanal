@@ -64,3 +64,7 @@ spec:
       value: {{EBMS_MSH_URL}}
     - name: NO_NAV_LEGALARCHIVE_URL
       value: {{NO_NAV_LEGALARCHIVE_URL}}
+    - name: NO_NAV_SDPKANAL_SFTP_URL
+      value: {{NO_NAV_SDPKANAL_SFTP_URL}}
+    - name: NO_NAV_SDPKANAL_DOKUMENT_PATH_PREFIX
+      value: {{NO_NAV_SDPKANAL_DOKUMENT_PATH_PREFIX}}
