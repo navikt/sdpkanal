@@ -2,7 +2,7 @@ import org.gradle.jvm.tasks.Jar
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 group = "no.nav.sdp-kanal"
-version = "1.3.1"
+version = "1.3.2"
 
 description = """Application for routing Secure Digital Post to DIFI"s message dispatcher"""
 
