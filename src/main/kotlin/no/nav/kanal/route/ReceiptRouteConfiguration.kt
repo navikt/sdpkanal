@@ -31,7 +31,7 @@ fun CamelContext.createReceiptPollingRoute(
 ) = object: RouteBuilder(this) {
     override fun configure() {
         // @formatter:off
-        from("timer://${routeName}Timer")
+        from("timer://${routeName}Timer?period=50")
                 .id(routeName)
                 .setHeader(RECEIPT_POLL_SUMMARY_HEADER) { sdpReceiptPollSummary.labels(routeName).startTimer() }
                 .setHeader(RECEIPT_SUMMARY_HEADER) { sdpReceiptWithPayloadSummary.labels(routeName).startTimer() }
