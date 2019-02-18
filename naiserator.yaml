@@ -10,7 +10,7 @@ spec:
   team: integrasjon
   replicas:
     min: 2
-    max: 8
+    max: 4
   port: 8080
   liveness:
     path: /is_alive
