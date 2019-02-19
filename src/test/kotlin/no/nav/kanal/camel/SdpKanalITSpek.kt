@@ -43,6 +43,8 @@ import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.SignalMessage
 import org.oasis_open.docs.ebxml_msg.ebms.v3_0.ns.core._200704.UserMessage
 import org.spekframework.spek2.Spek
 import org.spekframework.spek2.style.specification.describe
+// TODO: Remove import and reenable tests
+import org.spekframework.spek2.style.specification.xdescribe
 import org.unece.cefact.namespaces.standardbusinessdocumentheader.StandardBusinessDocument
 import java.io.StringReader
 import java.net.ServerSocket
@@ -209,7 +211,7 @@ object SdpKanalITSpek : Spek({
     fun genPayload(conversationId: String = UUID.randomUUID().toString()): String =
             messageBytes.toString(Charsets.UTF_8).replace("CONV_ID", conversationId).replace("B64_CERTIFICATE", appCert)
 
-    describe("Sending messages on the input queue") {
+    xdescribe("Sending messages on the input queue") {
         listOf(normalQueueSender, priorityQueueSender).forEach {
             it("Results in the message dispatcher receiving the message from input queue ${it.destination}") {
                 val payload = genPayload()
@@ -250,7 +252,7 @@ object SdpKanalITSpek : Spek({
         }
     }
 
-    describe("SOAP fault from the message dispatcher") {
+    xdescribe("SOAP fault from the message dispatcher") {
         listOf(normalQueueSender to normalBackoutConsumer, priorityQueueSender to priorityBackoutConsumer).forEach { (inputQueue, backoutQueue) ->
             it("Sending a message on the input queue ${inputQueue.destination} while exception is thrown ends up at $backoutQueue") {
                 val payload = genPayload()
@@ -269,7 +271,7 @@ object SdpKanalITSpek : Spek({
         }
     }
 
-    describe("In-flight messages") {
+    xdescribe("In-flight messages") {
         it("In-flight messages get sent to BOQ whenever they can't reach the message dispatcher") {
             shutdownServer()
 

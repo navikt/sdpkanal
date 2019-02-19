@@ -101,8 +101,8 @@ fun createCamelContext(
     addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, backoutReason))
     addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, backoutReason))
 
-    addRoutes(createSendRoute(SEND_NORMAL_ROUTE_NAME, config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", documentPackageCreator, ebmsPush))
-    addRoutes(createSendRoute(SEND_PRIORITY_ROUTE_NAME, config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", documentPackageCreator, ebmsPush))
+    //addRoutes(createSendRoute(SEND_NORMAL_ROUTE_NAME, config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, inputQueueNormal, "backoutMessageNormal", documentPackageCreator, ebmsPush))
+    //addRoutes(createSendRoute(SEND_PRIORITY_ROUTE_NAME, config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, inputQueuePriority, "backoutMessagePriority", documentPackageCreator, ebmsPush))
 }
 
 fun main(args: Array<String>) {
