@@ -15,6 +15,7 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.exporter.common.TextFormat
+import io.prometheus.client.hotspot.DefaultExports
 import kotlinx.coroutines.runBlocking
 import no.digipost.api.EbmsEndpointUriBuilder
 import no.digipost.api.representations.EbmsAktoer
@@ -105,6 +106,7 @@ fun createCamelContext(
 }
 
 fun main(args: Array<String>) {
+    DefaultExports.initialize()
     Base64.getDecoder().wrap(Files.newInputStream(Paths.get("/var/run/secrets/nais.io/vault/srvsdpkanal.jks.b64"))).use {
         Files.copy(it, Paths.get("/tmp/srvsdpkanal.jks"))
     }
