@@ -95,8 +95,8 @@ fun createCamelContext(
 
     shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = config.shutdownTimeout }
     disableJMX()
-    addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptConfirm, receiptQueueNormal))
-    addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalNormal, ebmsPull, receiptConfirm, receiptQueuePriority))
+    addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptConfirm, receiptQueueNormal))
+    addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalPriority, ebmsPull, receiptConfirm, receiptQueuePriority))
 
     addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, backoutReason))
     addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, backoutReason))
