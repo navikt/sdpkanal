@@ -22,7 +22,8 @@ class MetadataExtractor : Processor {
         val loggingValues = arrayOf(
                 keyValue("callId", messageId),
                 keyValue("messageId", messageId),
-                keyValue("conversationId", conversationId)
+                keyValue("conversationId", conversationId),
+                keyValue("receiverOrgNumber", sbd.standardBusinessDocumentHeader.receivers.first().identifier.value)
         )
         exchange.getIn().setHeader(LOGGING_VALUES_HEADER, loggingValues)
         exchange.getIn().setHeader(LOGGING_KEYS_HEADER, loggingValues.joinToString(", ", "(", ")") { "{}" })
