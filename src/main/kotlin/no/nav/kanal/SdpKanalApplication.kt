@@ -86,7 +86,7 @@ fun createCamelContext(
     val receiptQueueNormal = createJmsEndpoint(config.receiptQueueNormal)
     val receiptQueuePriority = createJmsEndpoint(config.receiptQueuePriority)
 
-    val ebmsSender = EbmsSender(EbmsEndpointUriBuilder.statiskUri(URI(config.ebmsEndpointUrl)), sdpKeys, receiver, legalArchiveLogger)
+    val ebmsSender = EbmsSender(EbmsEndpointUriBuilder.statiskUri(URI(config.ebmsEndpointUrl)), sdpKeys, datahandler, receiver, legalArchiveLogger)
     val ebmsPull = EbmsPull(receiver, ebmsSender)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, datahandler, receiver, ebmsSender)
     val receiptConfirm = ReceiptConfirm(ebmsSender)
