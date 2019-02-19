@@ -2,6 +2,7 @@ package no.nav.kanal.camel
 
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.jcraft.jsch.ChannelSftp
+import com.nhaarman.mockitokotlin2.argThat
 import com.nhaarman.mockitokotlin2.reset
 import com.nhaarman.mockitokotlin2.spy
 import com.nhaarman.mockitokotlin2.timeout
@@ -47,7 +48,6 @@ import java.io.StringReader
 import java.net.ServerSocket
 import java.nio.file.Files
 import java.nio.file.Paths
-import java.security.interfaces.RSAPrivateKey
 import java.util.Base64
 import java.util.UUID
 import java.util.concurrent.TimeUnit
@@ -244,6 +244,7 @@ object SdpKanalITSpek : Spek({
                 sbd.any shouldNotEqual null
                 sbd.any shouldBeInstanceOf SDPKvittering::class
                 sbd.standardBusinessDocumentHeader.documentIdentification.instanceIdentifier shouldEqual messageId
+                verify(requestHandler, timeout(20000).atLeast(1)).handleSignalMessage(any(), any(), argThat { this.receipt != null && !this.receipt.anies.isEmpty() })
                 println("Received receipt $receipt")
             }
         }

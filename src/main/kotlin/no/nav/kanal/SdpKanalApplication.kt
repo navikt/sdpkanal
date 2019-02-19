@@ -23,6 +23,7 @@ import no.nav.kanal.camel.BackoutReason
 import no.nav.kanal.camel.DocumentPackageCreator
 import no.nav.kanal.camel.EbmsPull
 import no.nav.kanal.camel.EbmsPush
+import no.nav.kanal.camel.ReceiptConfirm
 import no.nav.kanal.config.SdpConfiguration
 import no.nav.kanal.config.SdpKeys
 import no.nav.kanal.config.VaultCredentials
@@ -87,13 +88,14 @@ fun createCamelContext(
     val ebmsSender = EbmsSender(EbmsEndpointUriBuilder.statiskUri(URI(config.ebmsEndpointUrl)), sdpKeys, receiver, legalArchiveLogger)
     val ebmsPull = EbmsPull(receiver, ebmsSender)
     val ebmsPush = EbmsPush(config.maxRetries, config.retryIntervalInSeconds, datahandler, receiver, ebmsSender)
+    val receiptConfirm = ReceiptConfirm(ebmsSender)
     val backoutReason = BackoutReason()
     val documentPackageCreator = DocumentPackageCreator(sdpKeys, sftpConnectionPool, config.documentDirectory)
 
     shutdownStrategy = DefaultShutdownStrategy().apply { timeout  = config.shutdownTimeout }
     disableJMX()
-    addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptQueueNormal))
-    addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalNormal, ebmsPull, receiptQueuePriority))
+    addRoutes(createReceiptPollingRoute("pullReceiptsPriority", config.mpcPrioritert, EbmsOutgoingMessage.Prioritet.NORMAL, config.receiptPollIntervalNormal, ebmsPull, receiptConfirm, receiptQueueNormal))
+    addRoutes(createReceiptPollingRoute("pullReceiptsNormal", config.mpcNormal, EbmsOutgoingMessage.Prioritet.PRIORITERT, config.receiptPollIntervalNormal, ebmsPull, receiptConfirm, receiptQueuePriority))
 
     addRoutes(createDeadLetterRoute("backoutMessageNormal", inputQueueNormalBackout, backoutReason))
     addRoutes(createDeadLetterRoute("backoutMessagePriority", inputQueuePriorityBackout, backoutReason))

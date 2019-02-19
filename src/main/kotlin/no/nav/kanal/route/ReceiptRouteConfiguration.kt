@@ -6,6 +6,7 @@ import no.nav.kanal.METRICS_NAMESPACE
 import no.nav.kanal.MPC_ID_HEADER
 import no.nav.kanal.PRIORITY_HEADER
 import no.nav.kanal.camel.EbmsPull
+import no.nav.kanal.camel.ReceiptConfirm
 import no.nav.kanal.camel.header
 import org.apache.camel.CamelContext
 import org.apache.camel.builder.RouteBuilder
@@ -27,6 +28,7 @@ fun CamelContext.createReceiptPollingRoute(
         priority: EbmsOutgoingMessage.Prioritet,
         pollDelay: Long,
         ebmsPull: EbmsPull,
+        receiptConfirm: ReceiptConfirm,
         receiptQueue: JmsEndpoint
 ) = object: RouteBuilder(this) {
     override fun configure() {
@@ -42,6 +44,7 @@ fun CamelContext.createReceiptPollingRoute(
                 .`when`(body().isNotNull)
                     .to(receiptQueue)
                     .process { it.`in`.header<Summary.Timer>(RECEIPT_SUMMARY_HEADER).close() }
+                    .process(receiptConfirm)
                 .otherwise()
                     //.log("Polling $routeName returned empty result")
                     .delay(pollDelay)

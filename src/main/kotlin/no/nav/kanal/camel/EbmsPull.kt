@@ -26,10 +26,9 @@ class EbmsPull constructor(
                     keyValue("conversationId", receipt.conversationId)
             )
             val loggingKeys = loggingValues.joinToString(", ", "(", ")") { "{}" }
+            exchange.getIn().setHeader(RECEIPT_CONFIRMATION_HEADER, receipt)
 
             log.info("Received a receipt $loggingKeys", loggingValues)
-
-            ebmsSender.confirmReceipt(receipt)
 
             if (log.isDebugEnabled) {
                 log.debug("Receipt content ${receipt.sbdBytes.toString(Charsets.UTF_8)}")
