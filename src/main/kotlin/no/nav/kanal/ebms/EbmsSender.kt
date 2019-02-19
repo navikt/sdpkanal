@@ -35,6 +35,7 @@ import javax.xml.soap.SOAPConstants
 class EbmsSender(
         private val uri: EbmsEndpointUriBuilder,
         sdpKeys: SdpKeys,
+        val sender: EbmsAktoer,
         receiver: EbmsAktoer,
         private val legalArchiveLogger: LegalArchiveLogger,
         private val jaxb2Marshaller: Jaxb2Marshaller = Marshalling.getMarshallerSingleton(),
@@ -90,6 +91,6 @@ class EbmsSender(
         action: PMode.Action
     ) : TransportKvittering {
         val outgoing = EbmsOutgoingSender(signer, dataHandler, technicalReceiver, sbd, documentPackage, priority, mpcId, messageId, conversationId, action, jaxb2Marshaller)
-        return messageTemplate.sendAndReceive(uri.baseUri.toString(), outgoing, TransportKvitteringReceiver())
+        return messageTemplate.sendAndReceive(uri.build(sender, sender).toString(), outgoing, TransportKvitteringReceiver())
     }
 }
