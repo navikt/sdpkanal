@@ -11,11 +11,13 @@ import com.natpryce.konfig.intType
 import com.natpryce.konfig.longType
 import com.natpryce.konfig.overriding
 import com.natpryce.konfig.stringType
+import java.io.File
 import java.lang.RuntimeException
 import java.util.Properties
 
 val config = systemProperties() overriding
         EnvironmentVariables() overriding
+        ConfigurationProperties.fromFile(File("development.properties")) overriding
         ConfigurationProperties.fromResourceAsStream("/application.properties")
 
 private fun ConfigurationProperties.Companion.fromResourceAsStream(resourceName: String): ConfigurationProperties {
@@ -44,13 +46,14 @@ data class SdpConfiguration(
         val receiptQueuePriority: String = config["sdp.kvittering.prioritert.queuename"],
         val legalArchiveUrl: String = config["no.nav.legalarchive.url"],
         val receiptPollIntervalNormal: Long = config["ebms.pullinterval.normal"],
-        val receiptPollIntervalPriority: Long = config["ebms.pullinterval.normal"],
+        val receiptPollIntervalPriority: Long = config["ebms.pullinterval.prioritert"],
         val mpcNormal: String = config["ebms.mpc.normal"],
         val mpcPrioritert: String = config["ebms.mpc.prioritert"],
         val maxRetries: Long = config["ebms.push.maxRetries"],
         val retryIntervalInSeconds: Long = config["ebms.push.retryInterval"],
         val documentDirectory: String = config["no.nav.sdpkanal.dokument.path.prefix"],
         val sftpUrl: String = config["no.nav.sdpkanal.sftp.url"],
+        val sftpPort: Int = config["no.nav.sdpkanal.sftp.port"],
         val sftpKeyPath: String = config["no.nav.sdpkanal.sftp.key.path"],
         val knownHostsFile: String = config["no.nav.sdpkanal.sftp.known.hosts"],
         val shutdownTimeout: Long = config["no.nav.sdpkanal.shutdown.timeout"],

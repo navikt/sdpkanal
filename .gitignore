@@ -17,3 +17,5 @@ build/
 *.bin
 
 transaction-logs/
+
+.keys/

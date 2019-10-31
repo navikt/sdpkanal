@@ -20,8 +20,10 @@ fun createConnectionFactory(
             queueManager = mqQueueManager
             transportType = WMQConstants.WMQ_CM_CLIENT
             channel = channelName
-            sslSocketFactory = SSLSocketFactory.getDefault()
-            sslCipherSuite = "TLS_RSA_WITH_AES_256_CBC_SHA"
+            if (credentials.mqMutualTlsEnabled) {
+                sslSocketFactory = SSLSocketFactory.getDefault()
+                sslCipherSuite = "TLS_RSA_WITH_AES_256_CBC_SHA"
+            }
         })
         setUsername(credentials.mqUsername)
         setPassword(credentials.mqPassword)

@@ -1,0 +1,4 @@
+MQ_ADMIN_PASSWORD=insecure
+MQ_APP_PASSWORD=insecure
+MQ_QMGR_NAME=sdpkanal
+LICENSE=accept

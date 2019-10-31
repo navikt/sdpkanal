@@ -9,5 +9,6 @@ data class VaultCredentials(
     val sftpKeyPassword: String,
     val serviceuserUsername: String,
     val serviceuserPassword: String,
-    val applicationCertificatePassword: String
+    val applicationCertificatePassword: String?,
+    val mqMutualTlsEnabled: Boolean = true
 )

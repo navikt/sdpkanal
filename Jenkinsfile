@@ -47,12 +47,12 @@ pipeline {
                 deployApp action: 'kubectlDeploy', cluster: 'preprod-fss', placeholderFile: "config-preprod.env"
             }
         }
-        stage('deploy to prod') {
+        /*stage('deploy to prod') {
             when { environment name: 'DEPLOY_TO', value: 'production' }
             steps {
                 deployApp action: 'kubectlDeploy', cluster: 'prod-fss', placeholderFile: "config-prod.env"
             }
-        }
+        }*/
     }
     post {
         always {
